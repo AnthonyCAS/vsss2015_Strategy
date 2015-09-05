@@ -51,7 +51,15 @@ if __name__ == '__main__':
 
             out_data = VsssOutData()
 
+            dest = in_data.ball
+            dest.theta = 90
 
+            dest.y = min(16.5, max(-16.5, dest.y))
+            if sys.argv[1] == '0':
+                dest.x = 68
+            else:
+                dest.x = -68
+            move = go_to_from(dest, player)
 
             out_data.moves.append(move)
             out_data.moves.append(Move())

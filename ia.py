@@ -5,8 +5,8 @@ import sys
 import time
 
 from utils.serializer import VsssSerializer, VsssOutData
-from utils.core import Move, Position
-from utils.utils import go_to_from, normalize_angle
+from utils.core import Move, Position, RED_TEAM, BLUE_TEAM
+from utils.utils import Controller, normalize_angle
 
 VISION_SERVER = ('', 9009)
 CONTROL_SERVER = ('', 9009)
@@ -19,31 +19,30 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 sock.sendto('', VISION_SERVER)
 
-def ball_to_center(player, ball, goal):
+def ball_to_center(player, ball, goal, controller):
     print('Ball to center')
     if player.distance_to(ball) < 5:
         return Move(0, 20)
     else:
-        return go_to_from(ball, player)
+        return controller.go_to_from(ball, player)
 
-def go_to_shooting_pos(player, ball, goal):
+def go_to_shooting_pos(player, ball, goal, controller):
     print('go to shooting pos')
     if not abs(player.angle_to(goal) - ball.angle_to(goal)) < 0.2:
         vec_ball_to_del = goal.vector_to(ball) / goal.distance_to(ball)
         dest = ball.translate(vec_ball_to_del * 5)
         dest.theta = normalize_angle(ball.angle_to(goal))
     else:
-        dest = player
+        dest = Position(player.x, player.y)
         dest.theta = player.angle_to(goal)
-    return go_to_from(dest, player)
+    return controller.go_to_from(dest, player)
 
-
-def shoot(player, ball, goal):
+def shoot(player, ball, goal, controller):
     print('shoot')
-    move = go_to_from(goal, player, speed=75)
+    move = controller.go_to_from(goal, player, speed=75)
     return move
 
-def idle(player, ball, goal):
+def idle(player, ball, goal, controller):
     print('idle')
     return Move(0, 0)
 
@@ -53,44 +52,41 @@ class PlayerState:
     def __init__(self, state):
         self.state = state
 
-    def get_move(self, player, ball, goal):
-        return self.state(player, ball, goal)
+    def get_move(self, player, ball, goal, controller):
+        return self.state(player, ball, goal, controller)
 
 
-def get_portero_move(player, ball, goal):
-    dest = ball
+def get_portero_move(my_color, player, ball, goal, controller):
+    dest = Position(ball.x, ball.y)
     dest.theta = 90
 
     dest.y = min(16.5, max(-16.5, dest.y))
-    if sys.argv[1] == '0':
+    if my_color == RED_TEAM:
         dest.x = 68
     else:
         dest.x = -68
-    return go_to_from(dest, player)
+    return controller.go_to_from(dest, player)
 
 
-def get_delantero_move(player, ball, goal):
-    if sys.argv[1] == '0':
-        goal = Position(-75, 0)
-    else:
-        goal = Position(75, 0)
-
+delantero_state = PlayerState(go_to_shooting_pos)
+def get_delantero_move(my_color, player, ball, goal, controller):
     if True:#ball.distance_to(goal) < 70:
         if abs(ball.y) > 60 or abs(ball.x) > 70:
-            player_state.state = ball_to_center
+            delantero_state.state = ball_to_center
         elif (abs(player.angle_to(goal) - ball.angle_to(goal)) < 1 and
-              player.distance_to(goal) > ball.distance_to(goal)):
-            player_state.state = shoot
+                      player.distance_to(goal) > ball.distance_to(goal)):
+            delantero_state.state = shoot
         else:
-            player_state.state = go_to_shooting_pos
+            delantero_state.state = go_to_shooting_pos
     else:
-        player_state.state = idle
+        delantero_state.state = idle
 
-    return player_state.get_move(player, ball, goal)
+    move = delantero_state.get_move(player, ball, goal, controller)
+    return move
 
 
 
-player_state = PlayerState(go_to_shooting_pos)
+
 
 if __name__ == '__main__':
     def help():
@@ -109,27 +105,27 @@ if __name__ == '__main__':
     my_color = int(sys.argv[1])
     vsss_serializer = VsssSerializer(team_size=3, my_team=my_color)
 
+    portero_controller = Controller()
+    delantero_controller = Controller()
 
     while True:
         in_data, addr = sock.recvfrom(1024)
         cur_time = time.time() * 1000 # milliseconds
-        if cur_time - prev_time > 50:
+        if cur_time - prev_time > 0:
             prev_time = cur_time
-            in_data = vsss_serializer.load(in_data)
+            data = vsss_serializer.load(in_data)
 
-            my_team = in_data.teams[my_color]
-            player = my_team[1]
-            ball = in_data.ball
+            my_team = data.teams[my_color]
+            ball = data.ball
 
-            out_data = VsssOutData()
-
-            if sys.argv[1] == '0':
+            if my_color == RED_TEAM:
                 goal = Position(-75, 0)
             else:
                 goal = Position(75, 0)
 
-            out_data.moves.append(get_portero_move(player, ball, goal))
-            out_data.moves.append(get_delantero_move(player, ball, goal))
+            out_data = VsssOutData()
+            out_data.moves.append(get_portero_move(my_color, my_team[0], ball, goal, portero_controller))
+            out_data.moves.append(get_delantero_move(my_color, my_team[1], ball, goal, delantero_controller))
             out_data.moves.append(Move())
 
             out_data = vsss_serializer.dump(out_data)
