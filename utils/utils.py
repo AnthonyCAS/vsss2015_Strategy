@@ -1,5 +1,5 @@
 from .PID import PID
-from .core import Move, normalize_angle
+from .core import Move, normalize_angle, Position
 
 
 
@@ -21,9 +21,10 @@ def robot_error_rotation(goal, start):
         return angerr2
 
 class Controller:
-    def __init__(self):
+    def __init__(self, initial=Position()):
         self.lin_pid = PID(10, 10, 0)
         self.ang_pid = PID(0.2, 0.2, 0)
+        self.initial = initial
 
     def go_to_from(self, goal, start, speed=50):
         linerr, angerr = robot_error_translation(goal, start)
