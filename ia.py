@@ -22,7 +22,10 @@ sock.sendto('', VISION_SERVER)
 def ball_to_center(player, ball, goal, controller):
     print('Ball to center')
     if player.distance_to(ball) < 5:
-        return Move(0, 20)
+        if player.angle_to(goal) > 0:
+            return Move(0, 20)
+        else:
+            return Move(0, -20)
     else:
         return controller.go_to_from(ball, player)
 
@@ -121,10 +124,10 @@ if __name__ == '__main__':
     portero_controller = Controller()
     if my_color == RED_TEAM:
         delantero_controller = Controller(initial=Position(0, 0, 180))
-        medio_controller = Controller(initial=Position(50, 0, 180))
+        medio_controller = Controller(initial=Position(50, 10, 180))
     else:
         delantero_controller = Controller(initial=Position(0, 0, 0))
-        medio_controller = Controller(initial=Position(-50, 0, 0))
+        medio_controller = Controller(initial=Position(-50, -10, 0))
 
 
 
@@ -147,6 +150,7 @@ if __name__ == '__main__':
             out_data.moves.append(get_portero_move(my_color, my_team[0], ball, goal, portero_controller))
             out_data.moves.append(get_medio_move(my_color, my_team[1], ball, goal, medio_controller))
             out_data.moves.append(get_delantero_move(my_color, my_team[2], ball, goal, delantero_controller))
+            # out_data.moves.append(Move())
 
             out_data = vsss_serializer.dump(out_data)
             sock.sendto(out_data, CONTROL_SERVER)
