@@ -92,7 +92,8 @@ class RobotPosition(Position):
 
     def translation_error(self, goal):
         """
-        Calculate linear and angular errors to reach the goal position.
+        Calculate linear and angular distance errors to reach the goal position.
+        :type goal: Position
         :param goal: The position where the robot wants to go.
         :return: Linear and angular errors to reach the goal position.
         """

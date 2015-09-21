@@ -50,7 +50,7 @@ class TeamStrategyBase(object):
         self.sock.bind(self.THIS_SERVER)
         self.team = team
         self.team_size = team_size
-        self.serializer = self.serializer_class(team, team_size)
+        #self.serializer = self.serializer_class(team, team_size)
         self.done = False
 
     def strategy(self, in_data):
