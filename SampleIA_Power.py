@@ -121,17 +121,16 @@ class Test_strategy(TeamStrategySimulatorBase):
         if self.team == BLUE_TEAM:
             self.opposite_goal, self.my_goal = self.my_goal, self.opposite_goal
 
+        #Array for Initial Position for each team, index 0 has red robot positions
+        InitialPositions = [[RobotPosition(0, 0, 180), RobotPosition(50, 10, 180],
+            [RobotPosition(0, 0, 0), RobotPosition(-50, -10, 0)]
+
         super(Test_strategy, self).set_up()
+        #setting robot positions up
         self.goalkeeper_controller = Controller(initial=self.my_goal)
-        if self.team == RED_TEAM:
-            self.forward_controller = Controller(initial=RobotPosition(0, 0, 180),
+        self.forward_controller = Controller(initial=InitialPositions[self.team][0],
                                                  move_type='pow')
-            self.defence_controller = Controller(initial=RobotPosition(50, 10, 180),
-                                                 move_type='pow')
-        else:
-            self.forward_controller = Controller(initial=RobotPosition(0, 0, 0),
-                                                 move_type='pow')
-            self.defence_controller = Controller(initial=RobotPosition(-50, -10, 0),
+        self.defence_controller = Controller(initial=InitialPositions[self.team][1],
                                                  move_type='pow')
 
     def strategy(self, data):
