@@ -1,52 +1,50 @@
 #!/usr/bin/python
 
-import socket
 import sys
-import time
 
-from vsss.strategy import TeamStrategyBase
+from vsss.strategy import TeamStrategySimulatorBase
 from vsss.settings import *
 
 from vsss.serializer import VsssSerializerSimulator
 from vsss.controller import Controller
 from vsss.position import RobotPosition, Position
-#from vsss.servers import *
+from vsss.data import VsssOutData
+from vsss.move import MoveByVelocities
+from vsss.math.angles import normalize
 
-THIS_SERVER = ('', 9091)
-temp_serializer = None
-VISION_SERVER = ('', 9009)
-CONTROL_SERVER = ('', 9009)
 
 def ball_to_center(player, ball, goal, controller):
     print('Ball to center')
     if player.distance_to(ball) < 5:
         if player.angle_to(goal) > 0:
-            return Move(0, 20)
+            return (0, 20)
         else:
-            return Move(0, -20)
+            return MoveByVelocities(0, -20).to_powers()
     else:
-        return controller.go_to_from(ball, player, 'pow')
+        return controller.go_to_from(ball, player)
+
 
 def go_to_shooting_pos(player, ball, goal, controller):
     print('go to shooting pos')
     if not abs(player.angle_to(goal) - ball.angle_to(goal)) < 0.2:
         vec_ball_to_del = goal.vector_to(ball) / goal.distance_to(ball)
         dest = ball.translate(vec_ball_to_del * 5)
-        dest.theta = normalize_angle(ball.angle_to(goal))
+        dest.theta = normalize(ball.angle_to(goal))
     else:
         dest = Position(player.x, player.y)
         dest.theta = player.angle_to(goal)
-    return controller.go_to_from(dest, player, 'pow')
+    return controller.go_to_from(dest, player)
+
 
 def shoot(player, ball, goal, controller):
     print('shoot')
     move = controller.go_to_from(goal, player, speed=75)
     return move
 
+
 def idle(player, ball, goal, controller):
     print('idle')
     return controller.go_to_from(controller.initial, player)
-
 
 
 class PlayerState:
@@ -66,10 +64,12 @@ def get_portero_move(my_color, player, ball, goal, controller):
         dest.x = 68
     else:
         dest.x = -68
-    return controller.go_to_from(dest, player, 'pow')
+    return controller.go_to_from(dest, player)
 
 
 delantero_state = PlayerState(go_to_shooting_pos)
+
+
 def get_delantero_move(my_color, player, ball, goal, controller):
     if abs(goal.x - ball.x) < 80:
         if abs(ball.y) > 60 or abs(ball.x) > 70:
@@ -87,6 +87,8 @@ def get_delantero_move(my_color, player, ball, goal, controller):
 
 
 medio_state = PlayerState(go_to_shooting_pos)
+
+
 def get_medio_move(my_color, player, ball, goal, controller):
     if abs(goal.x - ball.x) > 80:
         if abs(ball.y) > 60 or abs(ball.x) > 70:
@@ -102,54 +104,63 @@ def get_medio_move(my_color, player, ball, goal, controller):
     move = medio_state.get_move(player, ball, goal, controller)
     return move
 
-class Test_strategy(TeamStrategyBase):
 
-    def __init__(self, team, team_size):
-        self.VISION_SERVER = VISION_SERVER        
-        self.CONTROL_SERVER = CONTROL_SERVER      
-        self.THIS_SERVER = THIS_SERVER  
-        self.serializer = temp_serializer
-        super(Test_strategy, self).__init__(team, team_size)
+class Test_strategy(TeamStrategySimulatorBase):
+    serializer_class = VsssSerializerSimulator
+    VISION_SERVER = ('', 9009)
+    CONTROL_SERVER = ('', 9009)
+    THIS_SERVER = ('', 9010)
 
     def set_up(self):
         """
-            Function to set robots position up and initialize the communication with 
-            vision server  
+        Function to set robots position up and initialize the communication with
+        vision server
         """
-        self.sock.sendto('', self.VISION_SERVER)
-        self.goalkeeper_controller = Controller()
+        self.opposite_goal = Position(-75, 0)
+        self.my_goal = Position(75, 0)
+        if self.team == BLUE_TEAM:
+            self.opposite_goal, self.my_goal = self.my_goal, self.opposite_goal
+
+        super(Test_strategy, self).set_up()
+        self.goalkeeper_controller = Controller(initial=self.my_goal)
         if self.team == RED_TEAM:
-            self.forward_controller = Controller(initial=Position(0, 0, 180))
-            self.defence_controller = Controller(initial=Position(50, 10, 180))
+            self.forward_controller = Controller(initial=RobotPosition(0, 0, 180),
+                                                 move_type='pow')
+            self.defence_controller = Controller(initial=RobotPosition(50, 10, 180),
+                                                 move_type='pow')
         else:
-            self.forward_controller = Controller(initial=Position(0, 0, 0))
-            self.defence_controller = Controller(initial=Position(-50, -10, 0))
+            self.forward_controller = Controller(initial=RobotPosition(0, 0, 0),
+                                                 move_type='pow')
+            self.defence_controller = Controller(initial=RobotPosition(-50, -10, 0),
+                                                 move_type='pow')
 
-    def strategy(self, in_data_serialized):
+    def strategy(self, data):
 
-            my_team = in_data_serialized.teams[self.team]
-            ball = in_data_serialized.ball
+        my_team = data.teams[self.team]
+        ball = data.ball
 
-            if self.team == RED_TEAM:
-                goal = Position(-75, 0)
-            else:
-                goal = Position(75, 0)
+        out_data = VsssOutData()
 
-            out_data = VsssOutData()
-            out_data.moves.append(get_portero_move(self.team, my_team[0], 
-                ball, goal, self.goalkeeper_controller))
-            out_data.moves.append(get_medio_move(self.team, my_team[1], 
-                ball, goal, defence_controller))
-            out_data.moves.append(get_delantero_move(self.team, my_team[2], 
-                ball, goal, forward_controller))
-            
-            return out_data
-        
+        out_data.moves.append(
+            get_portero_move(self.team, my_team[0], ball, self.opposite_goal,
+                             self.goalkeeper_controller))
+
+        out_data.moves.append(
+            get_medio_move(self.team, my_team[1], ball, self.opposite_goal,
+                           self.defence_controller))
+
+        out_data.moves.append(
+            get_delantero_move(self.team, my_team[2], ball, self.opposite_goal,
+                               self.forward_controller))
+
+        return out_data
+
 
 if __name__ == '__main__':
     def help():
-        return """./SampleIA_Power 0 = red team
-        ./SampleIA_Power 1 = blue team      """
+        return 'Usage:\n    %s\n    %s' % ('For red team: ./SampleIA_Power 0',
+                                           'For blue team:./SampleIA_Power 1')
+
 
     # Help the user if he doesn't know how to use the command
     if len(sys.argv) != 2:
@@ -160,6 +171,5 @@ if __name__ == '__main__':
         sys.exit()
 
     team = int(sys.argv[1])
-    temp_serializer = VsssSerializerSimulator(team,3)
     hardplay = Test_strategy(team, 3)
     hardplay.run()

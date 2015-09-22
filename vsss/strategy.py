@@ -18,7 +18,8 @@ class TeamStrategyBase(object):
     """
 
     latency = 50                # milliseconds
-    serializer_class = None     # e.g. VsssSerializer
+    serializer_class = None     # e.g. VsssSerializerSimulator
+
     VISION_SERVER = None        # (ip, port) e.g. ('127.0.0.1', 9009)
     CONTROL_SERVER = None       # (ip, port) e.g. ('127.0.0.1', 9009)
     THIS_SERVER = None          # (ip, port) e.g. ('127.0.0.1', 9009)
@@ -41,7 +42,7 @@ class TeamStrategyBase(object):
         if self.THIS_SERVER is None:
             raise AttributeError('THIS_SERVER is not defined as a class '
                                  'attribute, see the docs for TeamStrategyBase')
-        if self.serializer is None:
+        if self.serializer_class is None:
             raise AttributeError('serializer is not defined as a class '
                                  'attribute, see the docs for TeamStrategyBase')
 
@@ -50,7 +51,7 @@ class TeamStrategyBase(object):
         self.sock.bind(self.THIS_SERVER)
         self.team = team
         self.team_size = team_size
-        #self.serializer = self.serializer_class(team, team_size)
+        self.serializer = self.serializer_class(team, team_size)
         self.done = False
 
     def strategy(self, in_data):

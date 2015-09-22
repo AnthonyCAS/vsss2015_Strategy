@@ -10,8 +10,8 @@ class VsssInData(object):
 
     def __init__(self, teams=None, ball=None):
         """
-        :param teams:
-        :param ball:
+        :param teams: Array[2], where each item is an array of RobotPositions.
+        :param ball: Position object.
         :return: None.
         """
         if teams is None:

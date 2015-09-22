@@ -4,9 +4,9 @@ import socket
 import sys
 import time
 
-from utils.serializer import VsssSerializer, VsssOutData
-from utils.core import Move
-from utils.utils import go_to_from
+from vsss.serializer import VsssSerializer, VsssOutData
+from vsss.core import Move
+from vsss.utils import go_to_from
 
 VISION_SERVER = ('', 9009)
 CONTROL_SERVER = ('', 9009)

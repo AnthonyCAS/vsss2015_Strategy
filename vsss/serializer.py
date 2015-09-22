@@ -1,6 +1,6 @@
 import struct
 
-from data import VsssInData
+from data import VsssInData, VsssOutData
 from position import Position, RobotPosition
 
 
@@ -13,6 +13,7 @@ class VsssSerializerBase(object):
     * VsssInData.
     * VsssOutData.
     """
+
     def load(self, data):
         """
         Convert raw data to a standard VsssInObject.
@@ -47,23 +48,26 @@ class VsssSerializerSimulator(VsssSerializerBase):
         self.my_team = my_team
 
     def load(self, data):
-        data = struct.unpack('%sf' % (len(data)/4), data)
+        data = struct.unpack('%sf' % (len(data) / 4), data)
         teams = [[], []]
         for color, team in enumerate(teams):
             for i in range(self.team_size):
-                team.append(RobotPosition(data[3*self.team_size*color + i*3],
-                                     data[3*self.team_size*color + i*3+1],
-                                     data[3*self.team_size*color + i*3+2]))
+                team.append(
+                    RobotPosition(data[3 * self.team_size * color + i * 3],
+                                  data[3 * self.team_size * color + i * 3 + 1],
+                                  data[3 * self.team_size * color + i * 3 + 2]))
 
-        ball = Position(data[2*3*self.team_size],
-                        data[2*3*self.team_size + 1])
+        ball = Position(data[2 * 3 * self.team_size],
+                        data[2 * 3 * self.team_size + 1])
         return VsssInData(teams, ball)
 
     def dump(self, data):
-        data = [float(self.my_team)]
+        assert (type(data) == VsssOutData)
+        ret = [float(self.my_team)]
         if len(data.moves) != self.team_size:
-            print("WARNING: Team size in VsssOutData != Team size in VsssSerializer")
+            print(
+            "WARNING: Team size in VsssOutData != Team size in VsssSerializer")
         for move in data.moves:
-            data.append(move.linvel)
-            data.append(move.angvel)
-        return struct.pack('%sf' % len(data), *data)
+            ret.append(move.linvel)
+            ret.append(move.angvel)
+        return struct.pack('%sf' % len(ret), *ret)

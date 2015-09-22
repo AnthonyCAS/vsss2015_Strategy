@@ -4,9 +4,9 @@ import socket
 import sys
 import time
 
-from utils.serializer import VsssSerializer, VsssOutData
-from utils.core import Move, Position, RED_TEAM, BLUE_TEAM
-from utils.utils import Controller, normalize_angle
+from vsss.serializer import VsssSerializer, VsssOutData
+from vsss.core import Move, Position, RED_TEAM, BLUE_TEAM
+from vsss.utils import Controller, normalize
 
 VISION_SERVER = ('', 9009)
 CONTROL_SERVER = ('', 9009)
@@ -34,7 +34,7 @@ def go_to_shooting_pos(player, ball, goal, controller):
     if not abs(player.angle_to(goal) - ball.angle_to(goal)) < 0.2:
         vec_ball_to_del = goal.vector_to(ball) / goal.distance_to(ball)
         dest = ball.translate(vec_ball_to_del * 5)
-        dest.theta = normalize_angle(ball.angle_to(goal))
+        dest.theta = normalize(ball.angle_to(goal))
     else:
         dest = Position(player.x, player.y)
         dest.theta = player.angle_to(goal)

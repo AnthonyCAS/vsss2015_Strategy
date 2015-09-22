@@ -7,9 +7,9 @@ import time
 import sys
 from pygame.locals import *
 
-from utils.serializer import VsssSerializer, VsssOutData
-from utils.core import Move, RED_TEAM, BLUE_TEAM
-from utils.utils import go_to_from
+from vsss.serializer import VsssSerializer, VsssOutData
+from vsss.core import Move, RED_TEAM, BLUE_TEAM
+from vsss.utils import go_to_from
 
 VISION_SERVER = ('', 9009)
 CONTROL_SERVER = ('', 9009)
