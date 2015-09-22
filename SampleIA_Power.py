@@ -107,9 +107,9 @@ def get_medio_move(my_color, player, ball, goal, controller):
 
 class Test_strategy(TeamStrategySimulatorBase):
     serializer_class = VsssSerializerSimulator
-    VISION_SERVER = ('', 9009)
-    CONTROL_SERVER = ('', 9009)
-    THIS_SERVER = ('', 9010)
+    VISION_SERVER = ('127.0.0.1', 9009)
+    CONTROL_SERVER = ('127.0.0.1', 9009)
+    THIS_SERVER = ('127.0.0.1', 9010)
 
     def set_up(self):
         """
@@ -122,16 +122,16 @@ class Test_strategy(TeamStrategySimulatorBase):
             self.opposite_goal, self.my_goal = self.my_goal, self.opposite_goal
 
         #Array for Initial Position for each team, index 0 has red robot positions
-        InitialPositions = [[RobotPosition(0, 0, 180), RobotPosition(50, 10, 180],
-            [RobotPosition(0, 0, 0), RobotPosition(-50, -10, 0)]
+        InitialPositions = [[RobotPosition(0, 0, 180), RobotPosition(50, 10, 180)],
+            [RobotPosition(0, 0, 0), RobotPosition(-50, -10, 0)]]
 
         super(Test_strategy, self).set_up()
         #setting robot positions up
         self.goalkeeper_controller = Controller(initial=self.my_goal)
         self.forward_controller = Controller(initial=InitialPositions[self.team][0],
-                                                 move_type='pow')
+                                             move_type='pow')
         self.defence_controller = Controller(initial=InitialPositions[self.team][1],
-                                                 move_type='pow')
+                                             move_type='pow')
 
     def strategy(self, data):
 
