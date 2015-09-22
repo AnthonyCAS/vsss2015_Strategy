@@ -3,7 +3,7 @@
 import sys
 
 from vsss.strategy import TeamStrategySimulatorBase
-from vsss.settings import *
+from vsss.settings import RED_TEAM, BLUE_TEAM, MOVE_BY_POW
 
 from vsss.serializer import VsssSerializerSimulator
 from vsss.controller import Controller
@@ -17,7 +17,7 @@ def ball_to_center(player, ball, goal, controller):
     print('Ball to center')
     if player.distance_to(ball) < 5:
         if player.angle_to(goal) > 0:
-            return (0, 20)
+            return MoveByVelocities(0, 20).to_powers()
         else:
             return MoveByVelocities(0, -20).to_powers()
     else:
@@ -122,16 +122,24 @@ class Test_strategy(TeamStrategySimulatorBase):
             self.opposite_goal, self.my_goal = self.my_goal, self.opposite_goal
 
         #Array for Initial Position for each team, index 0 has red robot positions
-        InitialPositions = [[RobotPosition(0, 0, 180), RobotPosition(50, 10, 180],
-            [RobotPosition(0, 0, 0), RobotPosition(-50, -10, 0)]
+        InitialPositions = [
+            [
+                RobotPosition(0, 0, 180),
+                RobotPosition(50, 10, 180)
+            ],
+            [
+                RobotPosition(0, 0, 0),
+                RobotPosition(-50, -10, 0)
+            ]
+        ]
 
         super(Test_strategy, self).set_up()
         #setting robot positions up
         self.goalkeeper_controller = Controller(initial=self.my_goal)
         self.forward_controller = Controller(initial=InitialPositions[self.team][0],
-                                                 move_type='pow')
+                                             move_type=MOVE_BY_POW)
         self.defence_controller = Controller(initial=InitialPositions[self.team][1],
-                                                 move_type='pow')
+                                             move_type=MOVE_BY_POW)
 
     def strategy(self, data):
 
@@ -170,5 +178,5 @@ if __name__ == '__main__':
         sys.exit()
 
     team = int(sys.argv[1])
-    hardplay = Test_strategy(team, 3)
+    hardplay = Test_strategy(team, 3, move_type=MOVE_BY_POW)
     hardplay.run()

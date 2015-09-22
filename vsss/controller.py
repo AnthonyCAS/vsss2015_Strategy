@@ -2,6 +2,8 @@ from math.angles import normalize
 from position import Position
 from PID import PID
 from move import MoveByVelocities
+from settings import MOVE_BY_POW, MOVE_BY_VEL
+from exceptions import MoveTypeError
 
 
 class Controller:
@@ -10,7 +12,7 @@ class Controller:
     functions.
     """
     def __init__(self, initial, lin_pid=PID(10, 10, 10),
-                 ang_pid=PID(0.2, 0.2, 0.2), move_type='vel'):
+                 ang_pid=PID(0.2, 0.2, 0.2), move_type=MOVE_BY_VEL):
         """
         :param lin_pid: Linear PID.
         :param ang_pid: Angular PID.
@@ -42,12 +44,12 @@ class Controller:
         linvel = max(-speed, min(speed, self.lin_pid.update(linerr)))
         angvel = min(8, max(-8, self.ang_pid.update(angerr)))
 
-        if self.move_type == 'vel':
+        if self.move_type == MOVE_BY_VEL:
             return MoveByVelocities(linvel, angvel)
-        elif self.move_type == 'pow':
+        elif self.move_type == MOVE_BY_POW:
             return MoveByVelocities(linvel, angvel).to_powers()
         else:
-            raise ValueError("move_type can only be 'vel' or 'pow'")
+            raise MoveTypeError()
 
     def go_to_initial(self, current, speed=50):
         """

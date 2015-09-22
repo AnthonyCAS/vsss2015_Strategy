@@ -1,6 +1,8 @@
 import time
 import socket
 
+from settings import MOVE_BY_VEL
+
 
 class TeamStrategyBase(object):
     """
@@ -24,7 +26,7 @@ class TeamStrategyBase(object):
     CONTROL_SERVER = None       # (ip, port) e.g. ('127.0.0.1', 9009)
     THIS_SERVER = None          # (ip, port) e.g. ('127.0.0.1', 9009)
 
-    def __init__(self, team, team_size):
+    def __init__(self, team, team_size=3, move_type=MOVE_BY_VEL):
         """
         :param team: The team you're applying the strategy. You can import
         import either RED_TEAM or BLUE_TEAM from the settings.
@@ -51,7 +53,9 @@ class TeamStrategyBase(object):
         self.sock.bind(self.THIS_SERVER)
         self.team = team
         self.team_size = team_size
-        self.serializer = self.serializer_class(team, team_size)
+        self.serializer = self.serializer_class(team, team_size,
+                                                move_type=move_type)
+        self.move_type = move_type
         self.done = False
 
     def strategy(self, in_data):
