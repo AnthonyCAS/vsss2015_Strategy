@@ -107,9 +107,9 @@ def get_medio_move(my_color, player, ball, goal, controller):
 
 class Test_strategy(TeamStrategySimulatorBase):
     serializer_class = VsssSerializerSimulator
-    VISION_SERVER = ('', 9009)
-    CONTROL_SERVER = ('', 9009)
-    THIS_SERVER = ('', 9010)
+    VISION_SERVER = ('127.0.0.1', 9009)
+    CONTROL_SERVER = ('127.0.0.1', 9009)
+    THIS_SERVER = ('127.0.0.1', 9010)
 
     def set_up(self):
         """
