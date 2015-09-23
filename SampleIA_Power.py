@@ -3,7 +3,7 @@
 import sys
 
 from vsss.strategy import TeamStrategySimulatorBase
-from vsss.settings import RED_TEAM, BLUE_TEAM, MOVE_BY_POW
+from vsss.settings import RED_TEAM, BLUE_TEAM, MOVE_BY_POW, MOVE_BY_VEL
 
 from vsss.serializer import VsssSerializerSimulator
 from vsss.controller import Controller
@@ -121,7 +121,7 @@ class Test_strategy(TeamStrategySimulatorBase):
         if self.team == BLUE_TEAM:
             self.opposite_goal, self.my_goal = self.my_goal, self.opposite_goal
 
-        #Array for Initial Position for each team, index 0 has red robot positions
+        #Array for Initial Positions for each team, index 0 has the red team positions
         InitialPositions = [
             [
                 RobotPosition(0, 0, 180),
@@ -135,12 +135,13 @@ class Test_strategy(TeamStrategySimulatorBase):
 
         super(Test_strategy, self).set_up()
         #setting robot positions up
-        self.goalkeeper_controller = Controller(initial=self.my_goal)
+        self.goalkeeper_controller = Controller(initial=self.my_goal, 
+                                                move_type=self.move_type)
         self.forward_controller = Controller(initial=InitialPositions[self.team][0],
-                                             move_type=MOVE_BY_POW)
+                                             move_type=self.move_type)
         self.defence_controller = Controller(initial=InitialPositions[self.team][1],
-                                             move_type=MOVE_BY_POW)
-
+                                             move_type=self.move_type)
+    # Data is a VsssInData object
     def strategy(self, data):
 
         my_team = data.teams[self.team]
@@ -159,7 +160,6 @@ class Test_strategy(TeamStrategySimulatorBase):
         out_data.moves.append(
             get_delantero_move(self.team, my_team[2], ball, self.opposite_goal,
                                self.forward_controller))
-
         return out_data
 
 
