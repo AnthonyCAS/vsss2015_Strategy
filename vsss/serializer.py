@@ -16,7 +16,8 @@ class VsssSerializerBase(object):
 
     def load(self, data):
         """
-        Convert raw data to a standard VsssInObject.
+        Convert raw data to a standard VsssInObject. For positions, it will use
+        the center of the field as (0,0)
         :param data: Raw data comming from simulator or vision system.
         :return: VsssInData object.
         """
@@ -98,12 +99,12 @@ class VsssSerializerReal(VsssSerializerBase):
         for color, team in enumerate(teams):
             for i in range(self.team_size):
                 team.append(
-                    RobotPosition(data[3 * self.team_size * color + i * 3],
-                                  data[3 * self.team_size * color + i * 3 + 1],
-                                  np.degrees(data[3 * self.team_size * color + i * 3 + 2])))
+                    RobotPosition(data[3 * self.team_size * color + i * 3] - 75,
+                                  -(data[3 * self.team_size * color + i * 3 + 1] - 65),
+                                  data[3 * self.team_size * color + i * 3 + 2]))
 
-        ball = Position(data[2 * 3 * self.team_size],
-                        data[2 * 3 * self.team_size + 1])
+        ball = Position(data[2 * 3 * self.team_size]-75,
+                        -(data[2 * 3 * self.team_size + 1]-65))
         return VsssInData(teams, ball)
 
     def dump(self, data):

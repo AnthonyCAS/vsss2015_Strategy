@@ -2,35 +2,45 @@ import sys
 import pygame
 from pygame.locals import *
 
-from vsss.serializer import VsssSerializerReal
+from vsss.serializer import VsssSerializerReal, VsssSerializerSimulator
 from vsss.strategy import TeamStrategyBase
 from vsss.data import VsssOutData
 from vsss.move import Move
+from vsss.utils import get_millis
 
 
 class HumanControlStrategy(TeamStrategyBase):
-    # VISION_SERVER = ('192.168.218.110', 9001)
-    latency = 200
+    latency = 50
+    own_latency = 200
     use_vision = False
     THIS_SERVER = ('0.0.0.0', 9002)
-    CONTROL_SERVER = ('192.168.218.111', 9003)
+    CONTROL_SERVER = ('0.0.0.0', 9003)
 
-    serializer_class = VsssSerializerReal
+    serializer_class = VsssSerializerSimulator
 
     def set_up(self):
         super(HumanControlStrategy, self).set_up()
         assert (self.team_size <= 3)
-        print "Pygame init"
         pygame.init()
         self.screen = pygame.display.set_mode((100, 100))
+        self.prev_send = get_millis()
 
     def strategy(self, data):
+        send_now = False
+
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
                 self.done = True
-            elif e.type == pygame.KEYDOWN:
+            elif e.type == pygame.KEYDOWN or e.type == pygame.KEYUP:
+                send_now = True
                 if e.key == pygame.K_ESCAPE:
                     self.done = True
+
+        if get_millis() - self.prev_send > self.own_latency:
+            send_now = True
+
+        if not send_now:
+            return VsssOutData(moves=[Move()]*self.team_size)
 
         controls = [
             [K_UP, K_DOWN, K_RIGHT, K_LEFT],
@@ -53,8 +63,8 @@ class HumanControlStrategy(TeamStrategyBase):
             print move,
 
         print ''
-        out_data = VsssOutData(moves=moves)
-        return out_data
+        self.prev_send = get_millis()
+        return VsssOutData(moves=moves)
 
 
 if __name__ == '__main__':

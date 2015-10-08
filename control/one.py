@@ -45,7 +45,7 @@ while True:
             do_continue = True
     if do_continue:
         continue
-    
+
     m = np.matrix ([
         [0.5,0.5],
         [0.5,-0.5]])    

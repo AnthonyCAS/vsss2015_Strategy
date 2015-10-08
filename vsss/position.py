@@ -73,6 +73,15 @@ class Position(object):
         else:
             return ang
 
+    def move_origin(self, x, y):
+        """
+        Move the origin by (x, y). Return a new object without modifying this.
+        """
+        return Position(self.x - x, self.y - y)
+
+    def clone(self):
+        return Position(self.x, self.y)
+
 
 class RobotPosition(Position):
     """
@@ -93,12 +102,26 @@ class RobotPosition(Position):
     def __str__(self):
         return 'x: %s, y: %s, theta: %s' % (self.x, self.y, self.theta)
 
+    def __repr__(self):
+        return self.__str__()
 
-    def theta_to_speed(self):
-        h = 100
-        return np.array([h*np.cos(np.radians(self.theta)),
-                         h*np.sin(np.radians(self.theta))])
 
+    def theta_to_speed(self, speed=100):
+        return np.array([speed*np.cos(np.radians(self.theta)),
+                         speed*np.sin(np.radians(self.theta))])
+
+    def looking_to(self, dist=3):
+        """
+        :param dist: Distance from the center to the returned point.
+        :return: A point in the direction where the robot is looking
+        """
+        return np.array([self.x, self.y]) + self.theta_to_speed(dist)
+
+    def move_origin(self, x, y):
+        """
+        Move the origin by (x, y). Return a new object without modifying this.
+        """
+        return RobotPosition(self.x - x, self.y - y, self.theta)
 
     def translation_error(self, goal):
         """
@@ -133,3 +156,6 @@ class RobotPosition(Position):
             return angerr1
         else:
             return angerr2
+
+    def clone(self):
+        return RobotPosition(self.x, self.y, self.theta)

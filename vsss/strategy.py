@@ -1,8 +1,8 @@
-import time
 import socket
 import pygame
 
 from colors import *
+from utils import get_millis
 
 
 class TeamStrategyBase(object):
@@ -22,12 +22,12 @@ class TeamStrategyBase(object):
 
     latency = 50                # milliseconds
     serializer_class = None     # e.g. VsssSerializerSimulator
-    use_vision = True
-    do_visualize = False
+    use_vision = True           # use vision server
+    use_control = True          # use control server
+    do_visualize = False        # show pygame window with robot positions
     field_size = [150, 130]
     field_zoom = 3
 
-    VISION_SERVER = None        # (ip, port) e.g. ('127.0.0.1', 9009)
     CONTROL_SERVER = None       # (ip, port) e.g. ('127.0.0.1', 9009)
     THIS_SERVER = None          # (ip, port) e.g. ('127.0.0.1', 9009)
 
@@ -41,10 +41,7 @@ class TeamStrategyBase(object):
         """
 
         # Make sure you defined this class attributes in your child class
-        if self.use_vision and self.VISION_SERVER is None:
-            raise AttributeError('VISION_SERVER is not defined as a class '
-                                 'attribute, see the docs for TeamStrategyBase')
-        if self.CONTROL_SERVER is None:
+        if self.use_control and self.CONTROL_SERVER is None:
             raise AttributeError('CONTROL_SERVER is not defined as a class '
                                  'attribute, see the docs for TeamStrategyBase')
         if self.THIS_SERVER is None:
@@ -54,7 +51,7 @@ class TeamStrategyBase(object):
             raise AttributeError('serializer is not defined as a class '
                                  'attribute, see the docs for TeamStrategyBase')
 
-        self.prev_time = time.time() * 1000         # milliseconds
+        self.prev_time = get_millis()         # milliseconds
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(self.THIS_SERVER)
         self.team = team
@@ -103,7 +100,7 @@ class TeamStrategyBase(object):
                 in_data = None
                 if self.use_vision:
                     in_data, addr = self.sock.recvfrom(1024)
-                cur_time = time.time() * 1000           # milliseconds
+                cur_time = get_millis()           # milliseconds
                 if cur_time - self.prev_time > self.latency:
                     self.prev_time = cur_time
                     if self.use_vision:
@@ -111,10 +108,24 @@ class TeamStrategyBase(object):
                     if self.do_visualize:
                         self.visualize(in_data)
                     out_data = self.strategy(in_data)
-                    self.sock.sendto(self.serializer.dump(out_data),
-                                     self.CONTROL_SERVER)
+                    if self.use_control:
+                        self.sock.sendto(self.serializer.dump(out_data),
+                                         self.CONTROL_SERVER)
         finally:
             self.tear_down()
+
+    def to_screen(self, pos):
+        """
+        Does not modify original pos. Converto from field space to screen space.
+        :param pos: Position or RobotPosition
+        :return: new Position ready to draw on screen
+        """
+        pos = pos.clone()
+        pos.y = -pos.y
+        pos = pos.move_origin(-75, -65)
+        pos.x = int(pos.x*self.field_zoom)
+        pos.y = int(pos.y*self.field_zoom)
+        return pos
 
     def visualize(self, data):
         for e in pygame.event.get():
@@ -125,27 +136,17 @@ class TeamStrategyBase(object):
                     self.done = True
         colors = [RED, BLUE]
         self.screen.fill(WHITE)
-        for i in range(self.team_size):
+        for i in range(2):
             team = data.teams[i]
-            ball = data.ball
 
             for robot in team:
-                pygame.draw.circle(
-                    self.screen, colors[i], [int(robot.x * self.field_zoom),
-                                        int(robot.y * self.field_zoom)],
-                    5
-                )
-            pygame.draw.circle(self.screen, BLACK, [int(ball.x * self.field_zoom),
-                                               int(ball.y * self.field_zoom)],
-                               3)
+                robot = self.to_screen(robot)
+                center = [robot.x, robot.y]
+                pygame.draw.circle(self.screen, colors[i], center, 5)
+                front = robot.looking_to(10)
+                pygame.draw.line(self.screen, colors[i], center, front, 3)
+
+            ball = self.to_screen(data.ball)
+            center = [ball.x, ball.y]
+            pygame.draw.circle(self.screen, BLACK, center, 3)
         pygame.display.flip()
-
-
-class TeamStrategySimulatorBase(TeamStrategyBase):
-    """
-    Add some functionality to make the strategy compatible with the simulator.
-    You can inherit this class and use it exactly as TeamStrategyBase. The
-    modifications are completely transparent to you.
-    """
-    def set_up(self):
-        self.sock.sendto('', self.VISION_SERVER)
