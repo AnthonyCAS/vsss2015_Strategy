@@ -82,7 +82,7 @@ class RobotPosition(Position):
 
     def __init__(self, x=0, y=0, theta=0):
         """
-        :param theta: The orientation of the robot.
+        :param theta: The orientation of the robot. In degrees.
         Angle zero points to the positive axis X and it increments counter
         clockwise.
         :return: None.

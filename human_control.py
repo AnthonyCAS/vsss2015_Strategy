@@ -1,6 +1,5 @@
 import sys
 import pygame
-import time
 from pygame.locals import *
 
 from vsss.serializer import VsssSerializerReal
@@ -13,46 +12,48 @@ class HumanControlStrategy(TeamStrategyBase):
     # VISION_SERVER = ('192.168.218.110', 9001)
     latency = 200
     use_vision = False
-    THIS_SERVER = ('0.0.0.0', 9004)
-    CONTROL_SERVER = ('0.0.0.0', 9003)
+    THIS_SERVER = ('0.0.0.0', 9002)
+    CONTROL_SERVER = ('192.168.218.111', 9003)
 
     serializer_class = VsssSerializerReal
 
     def set_up(self):
         super(HumanControlStrategy, self).set_up()
+        assert (self.team_size <= 3)
+        print "Pygame init"
         pygame.init()
         self.screen = pygame.display.set_mode((100, 100))
-        self.prev_send = time.time() * 1000
 
     def strategy(self, data):
-        send_now = False
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
+                self.done = True
+            elif e.type == pygame.KEYDOWN:
+                if e.key == pygame.K_ESCAPE:
+                    self.done = True
 
-        events = pygame.event.get()
-        for event in events:
-            if event.type == KEYDOWN or event.type == KEYUP:
-                send_now = True
+        controls = [
+            [K_UP, K_DOWN, K_RIGHT, K_LEFT],
+            [K_w, K_s, K_d, K_a],
+            [K_i, K_k, K_l, K_j]
+        ]
 
-        if time.time()*1000 - self.prev_send > 200:
-            send_now = True
-
-        if send_now:
-            self.prev_send = time.time()*1000
+        moves = []
+        for i in range(self.team_size):
             move = Move(0, 0)
-            if pygame.key.get_pressed()[K_UP]:
+            if pygame.key.get_pressed()[controls[i][0]]:
                 move.linvel = 1
-            if pygame.key.get_pressed()[K_DOWN]:
+            if pygame.key.get_pressed()[controls[i][1]]:
                 move.linvel = -1
-            if pygame.key.get_pressed()[K_RIGHT]:
+            if pygame.key.get_pressed()[controls[i][2]]:
                 move.angvel = 0.5
-            if pygame.key.get_pressed()[K_LEFT]:
+            if pygame.key.get_pressed()[controls[i][3]]:
                 move.angvel = -0.5
-        else:
-            move = Move(10,10)
+            moves.append(move)
+            print move,
 
-        if send_now:
-            print move
-        out_data = VsssOutData(moves=[move])
-        pygame.event.pump()
+        print ''
+        out_data = VsssOutData(moves=moves)
         return out_data
 
 
@@ -71,5 +72,5 @@ if __name__ == '__main__':
         sys.exit()
 
     my_color = int(sys.argv[1])
-    strategy = HumanControlStrategy(my_color, 1)
+    strategy = HumanControlStrategy(my_color, 3)
     strategy.run()

@@ -1,32 +1,32 @@
 import sys
 
-from vsss.serializer import VsssSerializerReal, VsssSerializerSimulator
-from vsss.strategy import TeamStrategySimulatorBase
+from vsss.serializer import VsssSerializerReal
+from vsss.strategy import TeamStrategyBase
 from vsss.data import VsssOutData
 from vsss.controller import Controller
 from vsss.move import Move
 
 
 
-class SeguirBalonStrategy(TeamStrategySimulatorBase):
+class SeguirBalonStrategy(TeamStrategyBase):
     # VISION_SERVER = ('192.168.218.110', 9001)
     latency = 200
+    do_visualize = True
     VISION_SERVER = ('0.0.0.0', 9001)
     THIS_SERVER = ('0.0.0.0', 9002)
-    CONTROL_SERVER = ('0.0.0.0', 9001)
+    CONTROL_SERVER = ('192.168.218.111', 9003)
 
-    serializer_class = VsssSerializerSimulator
+    serializer_class = VsssSerializerReal
 
     def set_up(self):
         super(SeguirBalonStrategy, self).set_up()
         self.controller = Controller()
 
     def strategy(self, data):
-        print 'strategy'
         team = data.teams[self.team]
         ball = data.ball
         move = self.controller.go_to_from(ball, team[0])
-        out_data = VsssOutData(moves=[move])
+        out_data = VsssOutData(moves=[move, Move() , Move()])
         return out_data
 
 
@@ -45,5 +45,5 @@ if __name__ == '__main__':
         sys.exit()
 
     my_color = int(sys.argv[1])
-    strategy = SeguirBalonStrategy(my_color, 1)
+    strategy = SeguirBalonStrategy(my_color, 3)
     strategy.run()

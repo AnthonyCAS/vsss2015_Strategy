@@ -1,4 +1,5 @@
 import struct
+import numpy as np
 
 from data import VsssInData, VsssOutData
 from position import RobotPosition, Position
@@ -99,7 +100,7 @@ class VsssSerializerReal(VsssSerializerBase):
                 team.append(
                     RobotPosition(data[3 * self.team_size * color + i * 3],
                                   data[3 * self.team_size * color + i * 3 + 1],
-                                  data[3 * self.team_size * color + i * 3 + 2]))
+                                  np.degrees(data[3 * self.team_size * color + i * 3 + 2])))
 
         ball = Position(data[2 * 3 * self.team_size],
                         data[2 * 3 * self.team_size + 1])

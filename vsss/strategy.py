@@ -1,6 +1,8 @@
 import time
 import socket
+import pygame
 
+from colors import *
 
 
 class TeamStrategyBase(object):
@@ -20,12 +22,15 @@ class TeamStrategyBase(object):
 
     latency = 50                # milliseconds
     serializer_class = None     # e.g. VsssSerializerSimulator
+    use_vision = True
+    do_visualize = False
+    field_size = [150, 130]
+    field_zoom = 3
 
     VISION_SERVER = None        # (ip, port) e.g. ('127.0.0.1', 9009)
     CONTROL_SERVER = None       # (ip, port) e.g. ('127.0.0.1', 9009)
     THIS_SERVER = None          # (ip, port) e.g. ('127.0.0.1', 9009)
 
-    use_vision = True
 
     def __init__(self, team, team_size=3):
         """
@@ -71,7 +76,11 @@ class TeamStrategyBase(object):
         and its purpose is to set_up some stuff.
         :return: None.
         """
-        pass
+        if self.do_visualize:
+            pygame.init()
+            self.screen_size = map(lambda x: x*self.field_zoom, self.field_size)
+            self.screen = pygame.display.set_mode(self.screen_size)
+            pygame.display.set_caption("Vsss strategy")
 
     def tear_down(self):
         """
@@ -79,7 +88,8 @@ class TeamStrategyBase(object):
         reason, even if you hit Ctrl-C.
         :return: None.
         """
-        pass
+        if self.do_visualize:
+            pygame.quit()
 
     def run(self):
         """
@@ -98,11 +108,37 @@ class TeamStrategyBase(object):
                     self.prev_time = cur_time
                     if self.use_vision:
                         in_data = self.serializer.load(in_data)
+                    if self.do_visualize:
+                        self.visualize(in_data)
                     out_data = self.strategy(in_data)
                     self.sock.sendto(self.serializer.dump(out_data),
                                      self.CONTROL_SERVER)
         finally:
             self.tear_down()
+
+    def visualize(self, data):
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
+                self.done = True
+            elif e.type == pygame.KEYDOWN:
+                if e.key == pygame.K_ESCAPE:
+                    self.done = True
+        colors = [RED, BLUE]
+        self.screen.fill(WHITE)
+        for i in range(self.team_size):
+            team = data.teams[i]
+            ball = data.ball
+
+            for robot in team:
+                pygame.draw.circle(
+                    self.screen, colors[i], [int(robot.x * self.field_zoom),
+                                        int(robot.y * self.field_zoom)],
+                    5
+                )
+            pygame.draw.circle(self.screen, BLACK, [int(ball.x * self.field_zoom),
+                                               int(ball.y * self.field_zoom)],
+                               3)
+        pygame.display.flip()
 
 
 class TeamStrategySimulatorBase(TeamStrategyBase):
