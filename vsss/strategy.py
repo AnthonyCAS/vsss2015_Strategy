@@ -1,7 +1,6 @@
 import time
 import socket
 
-from settings import MOVE_BY_VEL
 
 
 class TeamStrategyBase(object):
@@ -26,7 +25,9 @@ class TeamStrategyBase(object):
     CONTROL_SERVER = None       # (ip, port) e.g. ('127.0.0.1', 9009)
     THIS_SERVER = None          # (ip, port) e.g. ('127.0.0.1', 9009)
 
-    def __init__(self, team, team_size=3, move_type=MOVE_BY_VEL):
+    use_vision = True
+
+    def __init__(self, team, team_size=3):
         """
         :param team: The team you're applying the strategy. You can import
         import either RED_TEAM or BLUE_TEAM from the settings.
@@ -35,7 +36,7 @@ class TeamStrategyBase(object):
         """
 
         # Make sure you defined this class attributes in your child class
-        if self.VISION_SERVER is None:
+        if self.use_vision and self.VISION_SERVER is None:
             raise AttributeError('VISION_SERVER is not defined as a class '
                                  'attribute, see the docs for TeamStrategyBase')
         if self.CONTROL_SERVER is None:
@@ -53,9 +54,7 @@ class TeamStrategyBase(object):
         self.sock.bind(self.THIS_SERVER)
         self.team = team
         self.team_size = team_size
-        self.serializer = self.serializer_class(team, team_size,
-                                                move_type=move_type)
-        self.move_type = move_type
+        self.serializer = self.serializer_class(team, team_size)
         self.done = False
 
     def strategy(self, in_data):
@@ -91,11 +90,15 @@ class TeamStrategyBase(object):
         self.set_up()
         try:
             while not self.done:
-                in_data, addr = self.sock.recvfrom(1024)
+                in_data = None
+                if self.use_vision:
+                    in_data, addr = self.sock.recvfrom(1024)
                 cur_time = time.time() * 1000           # milliseconds
                 if cur_time - self.prev_time > self.latency:
                     self.prev_time = cur_time
-                    out_data = self.strategy(self.serializer.load(in_data))
+                    if self.use_vision:
+                        in_data = self.serializer.load(in_data)
+                    out_data = self.strategy(in_data)
                     self.sock.sendto(self.serializer.dump(out_data),
                                      self.CONTROL_SERVER)
         finally:

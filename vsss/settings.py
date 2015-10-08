@@ -1,5 +1,2 @@
-RED_TEAM = 0
-BLUE_TEAM = 1
-
-MOVE_BY_VEL = 0
-MOVE_BY_POW = 1
+RED_TEAM = 'red'
+BLUE_TEAM = 'blue'

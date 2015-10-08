@@ -1,10 +1,13 @@
+import sys
 import pygame
-import socket
-import struct
+from math import pi
 
-# Initialize the game engine
-pygame.init()
- 
+from vsss.serializer import VsssSerializerSimulator
+from vsss.strategy import TeamStrategySimulatorBase, TeamStrategyBase
+from vsss.data import VsssOutData
+from vsss.move import Move
+
+
 # Define the colors we will use in RGB format
 BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
@@ -12,56 +15,88 @@ BLUE =  (  0,   0, 255)
 GREEN = (  0, 255,   0)
 RED =   (255,   0,   0)
 
-UDP_IP = ""
-UDP_PORT = 7000
-
-sock = socket.socket(socket.AF_INET, # Internet
-                     socket.SOCK_DGRAM) # UDP
-sock.bind((UDP_IP, UDP_PORT))
-sock.setblocking(0)
-
 # Set the height and width of the screen
-size = [400, 300]
-screen = pygame.display.set_mode(size)
- 
-pygame.display.set_caption("Test vision data")
-
-done = False
-clock = pygame.time.Clock()
-array = [0] * 20
- 
-while not done:
- 
-    # This limits the while loop to a max of 10 times per second.
-    # Leave this out and we will use all CPU we can.
-    clock.tick(10)
-     
-    for event in pygame.event.get(): # User did something
-        if event.type == pygame.QUIT: # If user clicked close
-            done=True # Flag that we are done so we exit this loop
-
-    try:
-        data, addr = sock.recvfrom(1024)
-        data = struct.unpack('20f', data)
-        array = map(lambda x: int(x), data)
-        print('Received:', array)
-    except:
-        pass
+field_size = [150, 130]
+enlargement = 3
+screen_size = map(lambda x: x*enlargement, field_size)
+screen = pygame.display.set_mode(screen_size)
+pygame.display.set_caption("Test vision")
 
 
-    # Clear the screen and set the screen background
-    screen.fill(WHITE)
+class SimulatorVisionTestStrategy(TeamStrategySimulatorBase):
+    # VISION_SERVER = ('192.168.218.110', 9001)
+    VISION_SERVER = ('0.0.0.0', 9001)
+    THIS_SERVER = ('0.0.0.0', 9002)
+    CONTROL_SERVER = ('192.168.218.1', 9003)
 
-    for i in range(6):
-        if i < 3:
-            COLOR = RED
-        else:
-            COLOR = BLUE
-        pygame.draw.circle(screen, COLOR, array[3*i:3*i+2], 3)
+    serializer_class = VsssSerializerSimulator
 
-    pygame.draw.circle(screen, GREEN, array[18:20], 3)
+    def strategy(self, data):
+        colors = [RED, BLUE]
+        screen.fill(WHITE)
+        for i in range(2):
+            team = data.teams[i]
+            ball = data.ball
 
-    pygame.display.flip()
+            for robot in team:
+                robot.x += 75
+                robot.y += 65
+                pygame.draw.circle(
+                    screen, colors[i], [int(robot.x * enlargement),
+                                        int(robot.y * enlargement)],
+                    5
+                )
+        pygame.display.flip()
 
-# Be IDLE friendly
-pygame.quit()
+        return VsssOutData(moves=[Move()]*3)
+
+
+class VisionTestStrategy(TeamStrategyBase):
+    VISION_SERVER = ('0.0.0.0', 9001)
+    THIS_SERVER = ('0.0.0.0', 9002)
+    CONTROL_SERVER = ('192.168.218.136', 9003)
+
+    serializer_class = VsssSerializerSimulator
+
+    def strategy(self, data):
+        colors = [RED, BLUE]
+        screen.fill(WHITE)
+        for i in range(2):
+            team = data.teams[i]
+            ball = data.ball
+
+            print 'TEAM', str(ball)
+            for robot in team:
+                print 'robot', str(robot)
+                pygame.draw.circle(
+                    screen, colors[i], [int(robot.x * enlargement),
+                                        int(robot.y * enlargement)],
+                    5
+                )
+            pygame.draw.circle(screen, BLACK, [int(ball.x * enlargement),
+                                               int(ball.y * enlargement)],
+                               3)
+        pygame.display.flip()
+
+        return VsssOutData(moves=[Move()]*3)
+
+if __name__ == '__main__':
+    def help():
+        return """Ejecute el script de cualquiera de las 2 formas, una para cada equipo:
+        ./vision_test 0
+        ./vision_test 1"""
+
+    # Help the user if he doesn't know how to use the command
+    if len(sys.argv) != 2:
+        print help()
+        sys.exit()
+    elif sys.argv[1] != '0' and sys.argv[1] != '1':
+        print help()
+        sys.exit()
+
+    my_color = int(sys.argv[1])
+    strategy = VisionTestStrategy(my_color, 3)
+
+    pygame.init()
+    strategy.run()
+    pygame.quit()

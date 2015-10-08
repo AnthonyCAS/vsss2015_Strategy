@@ -25,6 +25,9 @@ class Position(object):
     def __str__(self):
         return 'x: %s, y: %s' % (self.x, self.y)
 
+    def to_numpy(self):
+        return np.array([self.x, self.y])
+
     def vector_to(self, target_pos):
         """
         Calculate a vector from this position to the target position.
@@ -89,6 +92,13 @@ class RobotPosition(Position):
 
     def __str__(self):
         return 'x: %s, y: %s, theta: %s' % (self.x, self.y, self.theta)
+
+
+    def theta_to_speed(self):
+        h = 100
+        return np.array([h*np.cos(np.radians(self.theta)),
+                         h*np.sin(np.radians(self.theta))])
+
 
     def translation_error(self, goal):
         """
