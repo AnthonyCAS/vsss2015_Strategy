@@ -14,9 +14,9 @@ class HumanControlStrategy(TeamStrategyBase):
     own_latency = 200
     use_vision = False
     THIS_SERVER = ('0.0.0.0', 9002)
-    CONTROL_SERVER = ('0.0.0.0', 9003)
+    CONTROL_SERVER = ('192.168.218.147', 9003)
 
-    serializer_class = VsssSerializerSimulator
+    serializer_class = VsssSerializerReal
 
     def set_up(self):
         super(HumanControlStrategy, self).set_up()
@@ -50,7 +50,7 @@ class HumanControlStrategy(TeamStrategyBase):
 
         moves = []
         for i in range(self.team_size):
-            move = Move(0, 0)
+            move = Move(1, 1)
             if pygame.key.get_pressed()[controls[i][0]]:
                 move.linvel = 1
             if pygame.key.get_pressed()[controls[i][1]]:

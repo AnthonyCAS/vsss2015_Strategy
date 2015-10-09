@@ -10,7 +10,7 @@ from vsss.controller import Controller
 from vsss.position import RobotPosition, Position
 from vsss.data import VsssOutData
 from vsss.move import MoveByVelocities
-from vsss.math.angles import normalize
+from vsss.vsss_math.angles import normalize
 
 
 def ball_to_center(player, ball, goal, controller):

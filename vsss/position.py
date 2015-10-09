@@ -1,5 +1,5 @@
 import numpy as np
-from math.angles import normalize
+from vsss_math.angles import normalize
 
 
 class Position(object):
@@ -81,6 +81,10 @@ class Position(object):
 
     def clone(self):
         return Position(self.x, self.y)
+
+    @classmethod
+    def from_numpy_array(cls, array):
+        return Position(array[0], array[1])
 
 
 class RobotPosition(Position):

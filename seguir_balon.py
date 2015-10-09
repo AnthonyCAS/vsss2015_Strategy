@@ -1,6 +1,6 @@
 import sys
 
-from vsss.serializer import VsssSerializerReal
+from vsss.serializer import VsssSerializerSimulator, VsssSerializerReal
 from vsss.strategy import TeamStrategyBase
 from vsss.data import VsssOutData
 from vsss.controller import Controller
@@ -9,12 +9,11 @@ from vsss.move import Move
 
 
 class SeguirBalonStrategy(TeamStrategyBase):
-    # VISION_SERVER = ('192.168.218.110', 9001)
     latency = 200
     do_visualize = True
-    VISION_SERVER = ('0.0.0.0', 9001)
+
     THIS_SERVER = ('0.0.0.0', 9002)
-    CONTROL_SERVER = ('192.168.218.111', 9003)
+    CONTROL_SERVER = ('192.168.218.147', 9003)
 
     serializer_class = VsssSerializerReal
 
@@ -25,8 +24,8 @@ class SeguirBalonStrategy(TeamStrategyBase):
     def strategy(self, data):
         team = data.teams[self.team]
         ball = data.ball
-        move = self.controller.go_to_from(ball, team[0])
-        out_data = VsssOutData(moves=[move, Move() , Move()])
+        move = self.controller.go_to_from(ball, team[1])
+        out_data = VsssOutData(moves=[Move(0,0), move, Move(0,0)])
         return out_data
 
 

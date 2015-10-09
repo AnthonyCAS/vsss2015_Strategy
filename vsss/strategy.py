@@ -1,8 +1,6 @@
 import socket
-import pygame
-
-from colors import *
 from utils import get_millis
+from visualizer import VsssVisualizer
 
 
 class TeamStrategyBase(object):
@@ -22,10 +20,10 @@ class TeamStrategyBase(object):
 
     latency = 50                # milliseconds
     serializer_class = None     # e.g. VsssSerializerSimulator
-    use_vision = True           # use vision server
-    use_control = True          # use control server
+    use_vision = True           # use vision server, if False, strategy will receive data=None
+    use_control = True          # use control server, if False, strategy won't send data to control server
     do_visualize = False        # show pygame window with robot positions
-    field_size = [150, 130]
+    visualizer_class = VsssVisualizer
     field_zoom = 3
 
     CONTROL_SERVER = None       # (ip, port) e.g. ('127.0.0.1', 9009)
@@ -73,11 +71,9 @@ class TeamStrategyBase(object):
         and its purpose is to set_up some stuff.
         :return: None.
         """
+
         if self.do_visualize:
-            pygame.init()
-            self.screen_size = map(lambda x: x*self.field_zoom, self.field_size)
-            self.screen = pygame.display.set_mode(self.screen_size)
-            pygame.display.set_caption("Vsss strategy")
+            self.visualizer = self.visualizer_class(field_zoom=self.field_zoom)
 
     def tear_down(self):
         """
@@ -85,8 +81,8 @@ class TeamStrategyBase(object):
         reason, even if you hit Ctrl-C.
         :return: None.
         """
-        if self.do_visualize:
-            pygame.quit()
+        pass
+
 
     def run(self):
         """
@@ -106,47 +102,10 @@ class TeamStrategyBase(object):
                     if self.use_vision:
                         in_data = self.serializer.load(in_data)
                     if self.do_visualize:
-                        self.visualize(in_data)
+                        self.done = self.visualizer.visualize(in_data)
                     out_data = self.strategy(in_data)
                     if self.use_control:
                         self.sock.sendto(self.serializer.dump(out_data),
                                          self.CONTROL_SERVER)
         finally:
             self.tear_down()
-
-    def to_screen(self, pos):
-        """
-        Does not modify original pos. Converto from field space to screen space.
-        :param pos: Position or RobotPosition
-        :return: new Position ready to draw on screen
-        """
-        pos = pos.clone()
-        pos.y = -pos.y
-        pos = pos.move_origin(-75, -65)
-        pos.x = int(pos.x*self.field_zoom)
-        pos.y = int(pos.y*self.field_zoom)
-        return pos
-
-    def visualize(self, data):
-        for e in pygame.event.get():
-            if e.type == pygame.QUIT:
-                self.done = True
-            elif e.type == pygame.KEYDOWN:
-                if e.key == pygame.K_ESCAPE:
-                    self.done = True
-        colors = [RED, BLUE]
-        self.screen.fill(WHITE)
-        for i in range(2):
-            team = data.teams[i]
-
-            for robot in team:
-                robot = self.to_screen(robot)
-                center = [robot.x, robot.y]
-                pygame.draw.circle(self.screen, colors[i], center, 5)
-                front = robot.looking_to(10)
-                pygame.draw.line(self.screen, colors[i], center, front, 3)
-
-            ball = self.to_screen(data.ball)
-            center = [ball.x, ball.y]
-            pygame.draw.circle(self.screen, BLACK, center, 3)
-        pygame.display.flip()

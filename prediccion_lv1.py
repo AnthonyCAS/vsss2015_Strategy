@@ -1,7 +1,7 @@
 import sys
 import pygame
 import time
-from math import pi
+from vsss_math import pi
 import numpy as np
 
 from vsss.serializer import VsssSerializerSimulator

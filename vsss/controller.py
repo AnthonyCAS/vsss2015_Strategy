@@ -1,7 +1,7 @@
-from math.angles import normalize
-from position import Position
 from PID import PID
 from move import Move
+from trajectory import Trajectory
+from position import Position
 
 
 class Controller:
@@ -9,7 +9,7 @@ class Controller:
     Hold the linear and angular PIDs for each robot,besides some util
     functions.
     """
-    def __init__(self, lin_pid=PID(0.01, 0, 0.01),
+    def __init__(self, lin_pid=PID(0.03, 0, 0.01),
                  ang_pid=PID(0.01, 0, 0.001)):
         """
         :param lin_pid: Linear PID.
@@ -29,16 +29,27 @@ class Controller:
         :param goal: The goal position.
         :param current: The current position of the robot.
         :param speed: How fast the robot should get that position.
-        :return: A subclass of MoveBase, either MoveByVelocities or
-        MoveByPowers.
+        :return: Move
         """
         linerr, angerr = current.translation_error(goal)
-        if abs(linerr) < 1:
-            angerr = current.rotation_error(goal)
         linvel = max(-1, min(1, self.lin_pid.update(linerr)))
         angvel = min(1, max(-1, self.ang_pid.update(angerr)))
 
         return Move(linvel, angvel)
+
+    def go_with_trajectory(self, goal, current):
+        """
+        Create a trajectory to go to the desired goal
+        :param goal: RobotPosition where we want to go
+        :param current: RobotPosition where we are now
+        :return: Move
+        """
+        traj = Trajectory()
+        trajectory = traj.get_trajectory(goal, current,
+                                         current.distance_to(goal)/10.0)
+        intermediate = Position.from_numpy_array(trajectory[1])
+        print current, intermediate
+        return self.go_to_from(intermediate, current)
 
     def go_to_from_with_ball(self, goal, current, ball):
         move_to_goal = self.go_to_from(goal, current)
