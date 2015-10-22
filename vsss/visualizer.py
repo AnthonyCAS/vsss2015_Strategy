@@ -23,7 +23,7 @@ class VsssVisualizer(object):
         :return: new Position ready to draw on screen
         """
         if pos.__class__.__name__ == "ndarray":
-            pos = Position.from_numpy_array(pos)
+            pos = Position.fromnp(pos)
         pos = pos.clone()
         pos.y = -pos.y
         if hasattr(pos, 'theta'):

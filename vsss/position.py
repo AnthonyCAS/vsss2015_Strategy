@@ -1,5 +1,10 @@
+"""
+Everything will be handled in degrees
+"""
+
 import numpy as np
 from vsss_math.angles import normalize
+from vsss_math.arithmetic import *
 
 
 class Position(object):
@@ -25,8 +30,23 @@ class Position(object):
     def __str__(self):
         return 'x: %s, y: %s' % (self.x, self.y)
 
-    def to_numpy(self):
+    def __repr__(self):
+        return self.__str__()
+
+    def tonp(self):
+        """
+        To numpy
+        """
         return np.array([self.x, self.y])
+
+    @classmethod
+    def fromnp(self, a):
+        """
+        From numpy
+        :param a: Numpy array
+        :return: Position
+        """
+        return Position(x=a[0], y=a[1])
 
     def vector_to(self, target_pos):
         """
@@ -35,17 +55,16 @@ class Position(object):
         :return: A 2 dimensional vector from this position to the
         target position.
         """
-        return np.array([target_pos.x, target_pos.y]) - np.array(
-            [self.x, self.y])
+        return vector_to(self.tonp(), target_pos.tonp())
 
-    def translate(self, vec):
+    def translate(self, v):
         """
         Return a new Position object from this object translated by vec. It
         doesn't modify the actual position.
-        :param vec: Translation vector desired.
+        :param v: Translation vector desired.
         :return: New Position translated.
         """
-        return Position(self.x + vec[0], self.y + vec[1])
+        return Position.fromnp(translate(self.np(), v))
 
     def distance_to(self, target_pos):
         """
@@ -55,9 +74,9 @@ class Position(object):
         :return: The distance from the current position to the target position.
         """
         v = self.vector_to(target_pos)
-        return np.linalg.norm(v)
+        return norm(v)
 
-    def angle_to(self, target_pos, deg=True):
+    def angle_to(self, target_pos):
         """
         Calculate the angle from the current position to the target position.
         Without taking into account the orientation in any point.
@@ -66,12 +85,7 @@ class Position(object):
         :param deg: If true use degrees, else use radians.
         :return: Angle from the current position to the target position.
         """
-        v = self.vector_to(target_pos)
-        ang = np.arctan2(v[1], v[0])
-        if deg:
-            return normalize(ang * 180 / np.pi)
-        else:
-            return ang
+        return angle_to(self.tonp(), target_pos.tonp())
 
     def move_origin(self, x, y):
         """
@@ -81,10 +95,6 @@ class Position(object):
 
     def clone(self):
         return Position(self.x, self.y)
-
-    @classmethod
-    def from_numpy_array(cls, array):
-        return Position(array[0], array[1])
 
 
 class RobotPosition(Position):
@@ -108,7 +118,6 @@ class RobotPosition(Position):
 
     def __repr__(self):
         return self.__str__()
-
 
     def theta_to_speed(self, speed=100):
         return np.array([speed*np.cos(np.radians(self.theta)),

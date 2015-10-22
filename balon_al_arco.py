@@ -15,7 +15,7 @@ class TrajectoryVisualizer(VsssVisualizer):
     def extra_visualize(self):
         if trajectory is not None:
             global trajectory
-            trajectory = [self.to_screen(x).to_numpy() for x in trajectory]
+            trajectory = [self.to_screen(x).tonp() for x in trajectory]
             pygame.draw.lines(self.screen, GREEN, False, trajectory, 1)
             for p in trajectory:
                 pygame.draw.circle(self.screen, GREEN, p, 3, 3)
@@ -44,7 +44,7 @@ class BalonAlArcoStrategy(TeamStrategyBase):
 
         trajectory = self.traj.get_trajectory(goal, current,
                                          current.distance_to(goal)/10.0)
-        intermediate = Position.from_numpy_array(trajectory[1])
+        intermediate = Position.fromnp(trajectory[1])
         # print current, intermediate
         move = self.controller.go_to_from(intermediate, current)
 

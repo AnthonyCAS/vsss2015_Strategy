@@ -47,7 +47,7 @@ class Controller:
         traj = Trajectory()
         trajectory = traj.get_trajectory(goal, current,
                                          current.distance_to(goal)/10.0)
-        intermediate = Position.from_numpy_array(trajectory[1])
+        intermediate = Position.fromnp(trajectory[1])
         print current, intermediate
         return self.go_to_from(intermediate, current)
 
