@@ -1,6 +1,5 @@
 from PID import PID
 from move import Move
-from trajectory import Trajectory
 from position import Position
 
 

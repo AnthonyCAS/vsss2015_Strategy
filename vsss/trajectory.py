@@ -83,6 +83,9 @@ class TrajectorySCurve(TrajectoryBase):
         a = current.tonp()
         b = goal.tonp()
 
+        # angular step for desired points_distance
+        ang_step = points_distance*360.0/(2*np.pi*self.r)
+
         # Vars to calculate best trajectory
         minlen = 99999
         ret = []
@@ -91,8 +94,6 @@ class TrajectorySCurve(TrajectoryBase):
         # sa: sentido de a; sb: sentido de b
         for sa in [-1, 1]:
             for sb in [-1, 1]:
-
-                self.r = 30
                 # Get the circle in the current sa
                 a1 = move_by_radius(a, self.r, A+90*sa)
 
@@ -158,11 +159,11 @@ class TrajectorySCurve(TrajectoryBase):
                 if pathlen < minlen:
                     minlen = pathlen
                     ret = []
-                    for i in angle_range(D, E, sa*points_distance):
+                    for i in angle_range(D, E, sa*ang_step):
                         ret.append(move_by_radius(a1, self.r, i))
                     ret.append(tp1)
 
-                    for i in angle_range(G, F, sb*points_distance):
+                    for i in angle_range(G, F, sb*ang_step):
                         ret.append(move_by_radius(b1, self.r, i))
                     ret.append(b)
         return ret

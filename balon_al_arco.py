@@ -5,7 +5,7 @@ from vsss.strategy import TeamStrategyBase
 from vsss.data import VsssOutData
 from vsss.controller import Controller
 from vsss.position import RobotPosition, Position
-from vsss.trajectory import Trajectory
+from vsss.trajectory import TrajectorySCurve
 from vsss.visualizer import VsssVisualizer
 from vsss.colors import *
 
@@ -13,8 +13,8 @@ trajectory = None
 
 class TrajectoryVisualizer(VsssVisualizer):
     def extra_visualize(self):
+        global trajectory
         if trajectory is not None:
-            global trajectory
             trajectory = [self.to_screen(x).tonp() for x in trajectory]
             pygame.draw.lines(self.screen, GREEN, False, trajectory, 1)
             for p in trajectory:
@@ -33,7 +33,7 @@ class BalonAlArcoStrategy(TeamStrategyBase):
     def set_up(self):
         super(BalonAlArcoStrategy, self).set_up()
         self.controller = Controller()
-        self.traj = Trajectory()
+        self.traj = TrajectorySCurve(r=10)
 
     def strategy(self, data):
         global trajectory
@@ -42,8 +42,7 @@ class BalonAlArcoStrategy(TeamStrategyBase):
         goal = RobotPosition(ball.x, ball.y, ball.angle_to(Position(75, 0)))
         current = team[0]
 
-        trajectory = self.traj.get_trajectory(goal, current,
-                                         current.distance_to(goal)/10.0)
+        trajectory = self.traj.get_trajectory(goal, current, 3)
         intermediate = Position.fromnp(trajectory[1])
         # print current, intermediate
         move = self.controller.go_to_from(intermediate, current)

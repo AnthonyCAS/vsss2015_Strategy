@@ -6,7 +6,7 @@ Least letters "v, w, x, y, z" are vectors
 """
 
 import numpy as np
-from vsss_math.angles import normalize
+from angles import normalize
 
 def arr(*args):
     return np.array(args)
