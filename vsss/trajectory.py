@@ -80,100 +80,77 @@ class TrajectorySCurve(TrajectoryBase):
         a = current.tonp()
         b = goal.tonp()
         # sentidos horario=-1 antihorario=+1
-        if False: # Parallel trajectories
-            sa = -1
-            sb = -1
+        minlen = 99999
+        ret = []
+        for sa in [-1, 1]:
+            for sb in [-1, 1]:
 
-            r = 30
-            # 2 circles from a
-            a1 = move_by_radius(a, r, A+90*sa)
-            # a2 = move_by_radius(a, r, A-90)
+                r = 30
+                # 2 circles from a
+                a1 = move_by_radius(a, r, A+90*sa)
+                # a2 = move_by_radius(a, r, A-90)
 
-            # 2 circles from b
-            b1 = move_by_radius(b, r, B+90*sb)
-            # b2 = move_by_radius(b, r, B-90)
+                # 2 circles from b
+                b1 = move_by_radius(b, r, B+90*sb)
+                # b2 = move_by_radius(b, r, B-90)
 
-            # Points of parallel tangents:
-            C = angle_to(a1, b1)
-            t1p1 = move_by_radius(a1, r, C-90)
-            t2p1 = move_by_radius(a1, r, C+90)
-            if circle_right_direction(a1, r, sa, t1p1, C):
-                print 'Taking first trajectory'
-                tA = -90
-                tp1 = t1p1
-                tp2 = move_by_radius(b1, r, C+tA)
-            else:
-                tA = 90
-                tp1 = t2p1
-                tp2 = move_by_radius(b1, r, C+tA)
+                # Points of parallel tangents:
+                C = angle_to(a1, b1)
 
-            # Length of paths for t1
-            D = A-90*sa
-            E = C+tA
-            arc1 = arclen(D, E, r)
-            # arc2 = arclen(B+90, C-90, r)
-            # tlen = distance(tp1, tp2)
-            # pathlen = arc1 + arc2 + tlen
+                if sa == sb:            # parallel
+                    t1p1 = move_by_radius(a1, r, C-90)
+                    t2p1 = move_by_radius(a1, r, C+90)
 
-            # print "DISTANCE", pathlen
-            ret = [tp1, tp2, a, a1, b1, b]
-            for i in angle_range(D, E, sa):
-                ret.append(move_by_radius(a1, r, i))
+                    if circle_right_direction(a1, r, sa, t1p1, C):
+                        print 'Taking first trajectory'
+                        tA = -90
+                        tp1 = t1p1
+                        tp2 = move_by_radius(b1, r, C+tA)
+                    else:
+                        tA = 90
+                        tp1 = t2p1
+                        tp2 = move_by_radius(b1, r, C+tA)
+                else:                   # cross
+                    dist = distance(a, b)
+                    D = arccos(2.0*r/dist)
+                    t1p1 = move_by_radius(a1, r, C+D)
+                    t2p1 = move_by_radius(a1, r, C-D)
 
-            F = B-90*sb
-            G = C+tA
-            print G, F, angle_range(G, F, sb)
-            for i in angle_range(G, F, sb):
-                ret.append(move_by_radius(b1, r, i))
-            return ret
-        else:
-            sa = 1
-            sb = -1
+                    if circle_right_direction(a1, r, sa, t1p1, C+D-90):
+                        print 'Taking first trajectory'
+                        tA = -D
+                        tp1 = t1p1
+                        tp2 = move_by_radius(b1, r, C+tA)
+                    else:
+                        tA = D
+                        tp1 = t2p1
+                        tp2 = move_by_radius(b1, r, C+tA)
 
-            r = 30
-            # 2 circles from a
-            a1 = move_by_radius(a, r, A+90*sa)
-            # a2 = move_by_radius(a, r, A-90)
 
-            # 2 circles from b
-            b1 = move_by_radius(b, r, B+90*sb)
-            # b2 = move_by_radius(b, r, B-90)
+                # Length of paths for t1
+                D = A-90*sa
+                if sa == sb:
+                    E = C+tA
+                else:
+                    E = C-tA
 
-            # Points of parallel tangents:
-            C = angle_to(a1, b1)
-            dist = distance(a, b)
-            D = arccos(2.0*r/dist)
-            t1p1 = move_by_radius(a1, r, C+D)
-            t2p1 = move_by_radius(a1, r, C-D)
-            if circle_right_direction(a1, r, sa, t1p1, C+D-90):
-                print 'Taking first trajectory'
-                tA = -D
-                tp1 = t1p1
-                tp2 = move_by_radius(b1, r, C+tA)
-            else:
-                tA = D
-                tp1 = t2p1
-                tp2 = move_by_radius(b1, r, C+tA)
+                F = B-90*sb
+                G = C+tA
+                arc1 = arclen(D, E, r)
+                arc2 = arclen(G, F, r)
+                tlen = distance(tp1, tp2)
+                pathlen = arc1 + arc2 + tlen
+                if pathlen < minlen:
+                    minlen = pathlen
 
-            # Length of paths for t1
-            D = A-90*sa
-            E = C-tA
-            arc1 = arclen(D, E, r)
-            # arc2 = arclen(B+90, C-90, r)
-            # tlen = distance(tp1, tp2)
-            # pathlen = arc1 + arc2 + tlen
+                    ret = [tp1, tp2, a, a1, b1, b]
+                    for i in angle_range(D, E, sa):
+                        ret.append(move_by_radius(a1, r, i))
 
-            # print "DISTANCE", pathlen
-            ret = [tp1, tp2, a, a1, b1, b]
-            for i in angle_range(D, E, sa):
-                ret.append(move_by_radius(a1, r, i))
-
-            F = B-90*sb
-            G = C+tA
-            for i in angle_range(G, F, sb):
-                ret.append(move_by_radius(b1, r, i))
-            return ret
-
+                    print G, F, angle_range(G, F, sb)
+                    for i in angle_range(G, F, sb):
+                        ret.append(move_by_radius(b1, r, i))
+        return ret
 
 
 
@@ -221,8 +198,8 @@ def scurve_test():
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
 
-    current = RobotPosition(100, 500, 180)
-    goal = RobotPosition(700,100,180)
+    current = RobotPosition(700, 500, 180)
+    goal = RobotPosition(100,100,180)
 
     t = TrajectorySCurve()
     trajectory = t.get_trajectory(goal, current, 10)
