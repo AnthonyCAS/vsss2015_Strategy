@@ -6,7 +6,7 @@ from vsss.serializer import VsssSerializerReal, VsssSerializerSimulator
 from vsss.strategy import TeamStrategyBase
 from vsss.data import VsssOutData
 from vsss.move import Move
-from vsss.utils import get_millis
+import time
 
 
 class HumanControlStrategy(TeamStrategyBase):
@@ -23,7 +23,7 @@ class HumanControlStrategy(TeamStrategyBase):
         assert (self.team_size <= 3)
         pygame.init()
         self.screen = pygame.display.set_mode((100, 100))
-        self.prev_send = get_millis()
+        self.prev_send = time.time()
 
     def strategy(self, data):
         send_now = False
@@ -36,7 +36,7 @@ class HumanControlStrategy(TeamStrategyBase):
                 if e.key == pygame.K_ESCAPE:
                     self.done = True
 
-        if get_millis() - self.prev_send > self.own_latency:
+        if time.time() - self.prev_send > self.own_latency/1000.0:
             send_now = True
 
         if not send_now:
@@ -63,7 +63,7 @@ class HumanControlStrategy(TeamStrategyBase):
             print move,
 
         print ''
-        self.prev_send = get_millis()
+        self.prev_send = time.time()
         return VsssOutData(moves=moves)
 
 

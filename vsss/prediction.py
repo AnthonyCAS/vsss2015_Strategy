@@ -1,8 +1,10 @@
 import time
 from vsss_math.arithmetic import *
 from colors import *
+from ia.mlp import MLP
 
-class Prediction(object):
+
+class PredictionBase(object):
     def __init__(self, n=10):
         self.t0 = time.time()
         self.N = n
@@ -11,13 +13,21 @@ class Prediction(object):
         # Buffer to hold the times of the last N positions
         self.time_buffer = []
 
-    def update(self, pos):
-        self.time_buffer.append(time.time()-self.t0)
+    def get_current_time(self, delay=0):
+        return time.time()-self.t0-delay
+
+    def update(self, pos, delay):
+        self.time_buffer.append(self.get_current_time(delay))
         self.pos_buffer.append(pos.tonp())
         if len(self.pos_buffer) > self.N:
             self.pos_buffer.pop(0)
             self.time_buffer.pop(0)
 
+    def predict(self, deta_time):
+        raise NotImplementedError()
+
+
+class PredictionMruv(PredictionBase):
     def predict(self, delta_time):
         """
         Predict delta_time seconds in the future from the last update time
@@ -33,11 +43,14 @@ class Prediction(object):
         # average acceleration
         velocities = []
         for i in xrange(len(self.pos_buffer)-1):
-            velocities.append(distance(self.pos_buffer[i], self.pos_buffer[i+1]))
+            dt = self.time_buffer[i+1]-self.time_buffer[i]
+            velocities.append(distance(self.pos_buffer[i], self.pos_buffer[i+1])/dt)
         acelerations = []
         for i in xrange(len(velocities)-1):
-            acelerations.append(velocities[i+1]-velocities[i])
+            dt = self.time_buffer[i+1]-self.time_buffer[i]
+            acelerations.append((velocities[i+1]-velocities[i])/dt)
         aceleration = sum(acelerations)/len(acelerations)
+        print aceleration
 
         # final velocity
         d = distance(self.pos_buffer[0], self.pos_buffer[-1])
@@ -59,6 +72,29 @@ class Prediction(object):
         return p
 
 
+class PredictionANN(PredictionBase):
+    def __init__(self, n=10):
+        super(PredictionANN, self).__init__(n)
+        self.mlp = MLP([1+3*n, 3*n, 2])
+
+    def get_ann_input(self, delta_time):
+        temp = [x.tolist() for x in self.pos_buffer]
+        for i in xrange(len(temp)):
+            temp[i].append(self.time_buffer[i]-self.time_buffer[0])
+        temp = [item for sublist in temp for item in sublist]
+        return [delta_time] + temp
+
+    def train(self, pos, delay):
+        if len(self.pos_buffer) == self.N:
+            self.mlp.train(self.get_ann_input(self.get_current_time(delay)-self.time_buffer[0]), pos.tonp()/100)
+        self.update(pos, delay)
+
+    def predict(self, delta_time):
+        if len(self.pos_buffer) != self.N:
+            return np.array([0,0])
+        return self.mlp.proc(self.get_ann_input(self.get_current_time()+delta_time-self.time_buffer[0]))*100
+
+        
 
 
 
@@ -105,15 +141,15 @@ def prediction_test():
             super(BalonAlArcoStrategy, self).set_up()
             self.controller = Controller()
             self.traj = TrajectorySCurve(r=10)
-            self.predictor = Prediction(4)
+            self.predictor = PredictionMruv(5)
 
         def strategy(self, data):
             global trajectory, traj_times, traj_screen
             team = data.teams[self.team]
             ball = data.ball
 
+            self.predictor.update(ball, 0.0)
             if trajectory is None:
-                self.predictor.update(ball)
                 trajectory = []
                 traj_times = []
                 traj_screen = False
@@ -121,9 +157,8 @@ def prediction_test():
                     trajectory.append(self.predictor.predict(i))
                     traj_times.append(time.time() + i)
 
-            self.predictor.update(ball)
             for i in xrange(len(trajectory)):
-                if traj_times[i] <= time.time():
+                if traj_times[i] < time.time():
                     trajectory = []
                     traj_times = []
                     traj_screen = False

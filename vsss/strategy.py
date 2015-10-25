@@ -1,5 +1,5 @@
 import socket
-from utils import get_millis
+import time
 from visualizer import VsssVisualizer
 
 
@@ -49,7 +49,7 @@ class TeamStrategyBase(object):
             raise AttributeError('serializer is not defined as a class '
                                  'attribute, see the docs for TeamStrategyBase')
 
-        self.prev_time = get_millis()         # milliseconds
+        self.prev_time = time.time()         # milliseconds
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(self.THIS_SERVER)
         self.team = team
@@ -96,8 +96,8 @@ class TeamStrategyBase(object):
                 in_data = None
                 if self.use_vision:
                     in_data, addr = self.sock.recvfrom(1024)
-                cur_time = get_millis()           # milliseconds
-                if cur_time - self.prev_time > self.latency:
+                cur_time = time.time()
+                if cur_time - self.prev_time > self.latency/1000.0:
                     self.prev_time = cur_time
                     if self.use_vision:
                         in_data = self.serializer.load(in_data)
