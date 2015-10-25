@@ -96,6 +96,7 @@ class TeamStrategyBase(object):
                 in_data = None
                 if self.use_vision:
                     in_data, addr = self.sock.recvfrom(1024)
+
                 cur_time = time.time()
                 if cur_time - self.prev_time > self.latency/1000.0:
                     self.prev_time = cur_time
@@ -104,6 +105,7 @@ class TeamStrategyBase(object):
                     if self.do_visualize:
                         self.done = self.visualizer.visualize(in_data)
                     out_data = self.strategy(in_data)
+            
                     if self.use_control:
                         self.sock.sendto(self.serializer.dump(out_data),
                                          self.CONTROL_SERVER)
