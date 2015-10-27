@@ -8,7 +8,7 @@ class Controller:
     Hold the linear and angular PIDs for each robot,besides some util
     functions.
     """
-    def __init__(self, lin_pid=PID(0.03, 0, 0.01),
+    def __init__(self, lin_pid=PID(0.05, 0, 0.01),
                  ang_pid=PID(0.01, 0, 0)):
         """
         :param lin_pid: Linear PID.

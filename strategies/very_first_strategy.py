@@ -15,16 +15,6 @@ from vsss.settings import RED_TEAM, BLUE_TEAM
 from vsss.controller import Controller
 from vsss.vsss_math.angles import normalize
 
-VISION_SERVER = ('', 9009)
-CONTROL_SERVER = ('', 9009)
-THIS_SERVER = ('', 9091)
-
-prev_time = time.time() * 1000
-
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-# sock.bind(SERVER)
-
-sock.sendto('', VISION_SERVER)
 
 def ball_to_center(player, ball, goal, controller, *args, **kwargs):
     print('Ball to center')
@@ -54,7 +44,9 @@ def shoot(player, ball, goal, controller, *args, **kwargs):
 
 def idle(player, ball, goal, controller, *args, **kwargs):
     print('idle')
-    return controller.go_to_from(kwargs["initial"], player)
+    initial = kwargs["initial"]
+    follow_ball = Position(initial.x, ball.y)
+    return controller.go_to_from(initial, player)
 
 
 
@@ -124,8 +116,6 @@ class VeryFirstStrategy(TeamStrategyBase):
     latency = 50
     print_iteration_time = False
 
-    THIS_SERVER = ('0.0.0.0', 9002)
-    VISION_SERVER = ('127.0.0.1', 9001)
     CONTROL_SERVER = ('127.0.0.1', 9003)
 
     serializer_class = VsssSerializerSimulator
@@ -169,7 +159,20 @@ class VeryFirstStrategy(TeamStrategyBase):
 
 
 if __name__ == '__main__':
-    my_color = 0
-    strategy = VeryFirstStrategy(my_color, 3)
+    def help():
+        return """Ejecute el script de cualquiera de las 2 formas, una para cada equipo:
+        ./script_name 0 9002
+        ./script_name 1 9004"""
+
+    # Help the user if he doesn't know how to use the command
+    if len(sys.argv) != 3:
+        print help()
+        sys.exit()
+    elif sys.argv[1] != '0' and sys.argv[1] != '1':
+        print help()
+        sys.exit()
+
+    my_color = int(sys.argv[1])
+    strategy = VeryFirstStrategy(my_color, 3, this_server=("0.0.0.0", int(sys.argv[2])))
 
     strategy.run()

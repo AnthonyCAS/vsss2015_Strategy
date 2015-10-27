@@ -33,7 +33,7 @@ class TeamStrategyBase(object):
     THIS_SERVER = None          # (ip, port) e.g. ('127.0.0.1', 9009)
 
 
-    def __init__(self, team, team_size=3):
+    def __init__(self, team, team_size=3, this_server=None):
         """
         :param team: The team you're applying the strategy. You can import
         import either RED_TEAM or BLUE_TEAM from the settings.
@@ -46,8 +46,11 @@ class TeamStrategyBase(object):
             raise AttributeError('CONTROL_SERVER is not defined as a class '
                                  'attribute, see the docs for TeamStrategyBase')
         if self.THIS_SERVER is None:
-            raise AttributeError('THIS_SERVER is not defined as a class '
-                                 'attribute, see the docs for TeamStrategyBase')
+            if this_server is None:
+                raise AttributeError('THIS_SERVER is not defined as a class '
+                                     'attribute, see the docs for TeamStrategyBase')
+            else:
+                self.THIS_SERVER = this_server
         if self.serializer_class is None:
             raise AttributeError('serializer is not defined as a class '
                                  'attribute, see the docs for TeamStrategyBase')
