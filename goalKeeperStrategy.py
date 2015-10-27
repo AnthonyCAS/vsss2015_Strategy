@@ -12,7 +12,7 @@ from vsss.position import RobotPosition, Position
 from vsss.serializer import VsssSerializerSimulator, VsssSerializerReal
 from vsss.strategy import TeamStrategyBase
 from vsss.data import VsssOutData, VsssInData
-
+from stateMachine import *
 
 RED_TEAM = 0
 BLUE_TEAM = 1
@@ -64,6 +64,7 @@ def get_goalKeeper_move(color, currentPosition, ballPosition, objetive, controll
     newPosition.y = min(16.5, max(-16.5, newPosition.y))
     if color == RED_TEAM:
         newPosition.x = 68
+        return controller
     else:
         newPosition.x = -68
     return controller.go_to_from(newPosition, currentPosition)

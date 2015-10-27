@@ -77,11 +77,22 @@ def check (a):
             return False
     return True
 
-while True:
-    data, addr = sock.recvfrom(24) # buffer size is 1024 bytes
-    c = struct.unpack("6f",data)
-    print "Llego ", c
-    if check(c):
-        v = velocidad_to_potencias (c)
-        print "Sale ", v
-        potencias(v)
+
+
+
+import sys
+from PyQt4.QtGui import *
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    button = QPushButton("Hello World", None)
+    button.show()
+    app.exec_()
+
+    # while True:
+    #     data, addr = sock.recvfrom(24) # buffer size is 1024 bytes
+    #     c = struct.unpack("6f",data)
+    #     print "Llego ", c
+    #     if check(c):
+    #         v = velocidad_to_potencias (c)
+    #         print "Sale ", v
+    #         potencias(v)

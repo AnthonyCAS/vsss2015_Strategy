@@ -64,7 +64,7 @@ class Position(object):
         :param v: Translation vector desired.
         :return: New Position translated.
         """
-        return Position.fromnp(translate(self.np(), v))
+        return Position.fromnp(translate(self.tonp(), v))
 
     def distance_to(self, target_pos):
         """

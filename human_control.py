@@ -13,6 +13,7 @@ class HumanControlStrategy(TeamStrategyBase):
     latency = 50
     own_latency = 100
     use_vision = False
+    print_iteration_time = False
     THIS_SERVER = ('0.0.0.0', 9002)
     CONTROL_SERVER = ('0.0.0.0', 9003)
 
@@ -40,6 +41,10 @@ class HumanControlStrategy(TeamStrategyBase):
                     self.power = (e.key - pygame.K_0)/10.0
                     if self.power == 0:
                         self.power = 1.0
+                elif e.key == pygame.K_PLUS or e.key == pygame.K_KP_PLUS:
+                    self.power += 0.01
+                elif e.key == pygame.K_MINUS or e.key == pygame.K_KP_MINUS:
+                    self.power -= 0.01
 
         if time.time() - self.prev_send > self.own_latency/1000.0:
             send_now = True

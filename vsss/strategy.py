@@ -27,6 +27,7 @@ class TeamStrategyBase(object):
     do_visualize = False        # show pygame window with robot positions
     visualizer_class = VsssVisualizer
     field_zoom = 3
+    print_iteration_time = True
 
     CONTROL_SERVER = None       # (ip, port) e.g. ('127.0.0.1', 9009)
     THIS_SERVER = None          # (ip, port) e.g. ('127.0.0.1', 9009)
@@ -58,6 +59,9 @@ class TeamStrategyBase(object):
         self.team_size = team_size
         self.serializer = self.serializer_class(team, team_size)
         self.done = False
+
+    def call_strategy(self, in_data):
+        return self.strategy(in_data)
 
     def strategy(self, in_data):
         """
@@ -97,9 +101,13 @@ class TeamStrategyBase(object):
         self.set_up()
         try:
             while not self.done:
+                start_time = time.time()
                 in_data = None
+                vision_time = 0.0
                 if self.use_vision:
+                    vision_t0 = time.time()
                     in_data, addr = self.sock.recvfrom(1024)
+                    vision_time = time.time() - vision_t0
 
                 cur_time = time.time()
                 if cur_time - self.prev_time > self.latency/1000.0:
@@ -108,10 +116,30 @@ class TeamStrategyBase(object):
                         in_data = self.serializer.load(in_data)
                     if self.do_visualize:
                         self.done = self.visualizer.visualize(in_data)
-                    out_data = self.strategy(in_data)
+                    out_data = self.call_strategy(in_data)
             
                     if self.use_control:
                         self.sock.sendto(self.serializer.dump(out_data),
                                          self.CONTROL_SERVER)
+                end_time = time.time()
+                if self.print_iteration_time:
+                    it_time = end_time - start_time
+                    it_time -= vision_time
+                    print "Vision: ", vision_time, "\t", "Iteration: ", it_time
         finally:
             self.tear_down()
+
+
+class FirstTimeStrategy(TeamStrategyBase):
+    def __init__(self, team, team_size):
+        super(FirstTimeStrategy, self).__init__(team, team_size)
+        self.first_time = True
+
+    def call_strategy(self, in_data):
+        if self.first_time:
+            return self.do_on_first_time(in_data)
+        else:
+            return self.strategy(in_data)
+
+    def do_on_first_time(self, data):
+        raise NotImplementedError()

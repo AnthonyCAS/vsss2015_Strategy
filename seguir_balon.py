@@ -9,13 +9,13 @@ from vsss.move import Move
 
 
 class SeguirBalonStrategy(TeamStrategyBase):
-    latency = 200
+    latency = 100
     do_visualize = True
 
     THIS_SERVER = ('0.0.0.0', 9002)
-    CONTROL_SERVER = ('192.168.218.147', 9003)
+    CONTROL_SERVER = ('0.0.0.0', 9003)
 
-    serializer_class = VsssSerializerReal
+    serializer_class = VsssSerializerSimulator
 
     def set_up(self):
         super(SeguirBalonStrategy, self).set_up()
@@ -24,8 +24,9 @@ class SeguirBalonStrategy(TeamStrategyBase):
     def strategy(self, data):
         team = data.teams[self.team]
         ball = data.ball
-        move = self.controller.go_to_from(ball, team[1])
-        out_data = VsssOutData(moves=[Move(0,0), move, Move(0,0)])
+        move = self.controller.go_to_from(ball, team[0])
+        print move
+        out_data = VsssOutData(moves=[move])
         return out_data
 
 
@@ -44,5 +45,5 @@ if __name__ == '__main__':
         sys.exit()
 
     my_color = int(sys.argv[1])
-    strategy = SeguirBalonStrategy(my_color, 3)
+    strategy = SeguirBalonStrategy(my_color, 1)
     strategy.run()

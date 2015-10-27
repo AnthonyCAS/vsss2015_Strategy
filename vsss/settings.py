@@ -1,2 +1,2 @@
-RED_TEAM = 'red'
-BLUE_TEAM = 'blue'
+RED_TEAM = 0
+BLUE_TEAM = 1

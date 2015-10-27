@@ -38,7 +38,7 @@ Methods to manage the robot moves
 def get_defensor_move(color, currentPosition, ballPosition, objetive, controller):
     if abs(currentPosition.x - ballPosition.x) > 75:
         if abs(currentPosition.y - ballPosition.y) > 65:
-            DefensorState.state = go go_to_ball
+            DefensorState.state = go_to_ball
         elif (abs(currentPosition.angle_to(objetive) - ballPosition.angle_to(objetive)) < 1 and
                       currentPosition.distance_to(objetive) > ballPosition.distance_to(objetive)):
             DefensorState.state = shootingBall
