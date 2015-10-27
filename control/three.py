@@ -28,6 +28,7 @@ def potencias(a):
     arduino.flushOutput()
     str = ''
     for i in range (len(a)):
+        print (a[i])
         str += chr(a[i])
     arduino.write(str+'#')
 
@@ -45,14 +46,30 @@ def velocidad_to_potencias (c):
     velocidades2[0] = -velocidades2[0]
     velocidades3 = m*np.matrix([[c[4]],[c[5]]])
     velocidades3[0] = -velocidades3[0]
-    v1 = map(lambda x: (x + 1)*90, velocidades1)
-    v2 = map(lambda x: (x + 1)*90, velocidades2)
-    v3 = map(lambda x: (x + 1)*90, velocidades3)
+
+    f1 = 1.55
+    f2 = 1.55
+    f3 = 1.0
+
+    velocidades1[1] *= f1
+    n1 = 127.0/max(1, f1)
+    v1 = velocidades1*n1 + 128
+
+    v2 = [128, 128]
+    v3 = [128, 128]
+
     return [v1[0],v1[1],v2[0],v2[1],v3[0],v3[1]]
+
+def check (a):
+    for i in range (len(a)):
+        if abs(a[i])>1.0:
+            return False
+    return True
 
 while True:
     data, addr = sock.recvfrom(24) # buffer size is 1024 bytes
     c = struct.unpack("6f",data)
-    v = velocidad_to_potencias (c)
-    print v
-    potencias(v)
+    if check(c):
+        v = velocidad_to_potencias (c)
+        print v
+        potencias(v)

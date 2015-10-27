@@ -7,21 +7,20 @@ class VisionTestStrategy(TeamStrategyBase):
     do_visualize = True
     use_vision = True
 
-    THIS_SERVER = ('127.0.0.1', 9002)
+    THIS_SERVER = ('0.0.0.0', 9002)
     VISION_SERVER = ('127.0.0.1', 9001)
     CONTROL_SERVER = ('127.0.0.1', 9001)
    
-    serializer_class = VsssSerializerSimulator
+    serializer_class = VsssSerializerReal
     def set_up(self):
 		super(VisionTestStrategy, self).set_up()
-		self.sock.sendto('', self.VISION_SERVER)
 
     def strategy(self, data):
-        print data.teams
+        print data.teams, data.ball
 
 
 if __name__ == '__main__':
     my_color = 0
-    strategy = VisionTestStrategy(my_color, 1)
+    strategy = VisionTestStrategy(my_color, 3)
     
     strategy.run()

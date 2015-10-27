@@ -1,6 +1,8 @@
 import socket
 import time
 from visualizer import VsssVisualizer
+from vsss.move import Move
+from vsss.data import VsssOutData
 
 
 class TeamStrategyBase(object):
@@ -81,7 +83,9 @@ class TeamStrategyBase(object):
         reason, even if you hit Ctrl-C.
         :return: None.
         """
-        pass
+        if self.use_control:
+            out_data = VsssOutData(moves=[Move(0,0)]*self.team_size)
+            self.sock.sendto(self.serializer.dump(out_data), self.CONTROL_SERVER)
 
 
     def run(self):

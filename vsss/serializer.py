@@ -95,6 +95,7 @@ class VsssSerializerReal(VsssSerializerBase):
 
     def load(self, data):
         data = struct.unpack('%sf' % (len(data) / 4), data)
+        # print data
         teams = [[], []]
         for color, team in enumerate(teams):
             for i in range(self.team_size):

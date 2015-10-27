@@ -33,14 +33,16 @@ class VsssVisualizer(object):
         pos.y = int(pos.y*self.field_zoom)
         return pos
 
-
-    def visualize(self, data, extra_visualization=None):
+    def listen_events(self):
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
                 self.done = True
             elif e.type == pygame.KEYDOWN:
                 if e.key == pygame.K_ESCAPE:
                     self.done = True
+
+    def visualize(self, data, extra_visualization=None):
+        self.listen_events()
         colors = [RED, BLUE]
         self.screen.fill(WHITE)
         for i in range(2):

@@ -4,7 +4,7 @@ class Move(object):
     This class is intended to hold the movement of the robots using linear
     and angular velocities.
     """
-    def __init__(self, linvel=99999, angvel=99999):
+    def __init__(self, linvel=10, angvel=10):
         """
         Initialize the object with the linear and angular velocities. If you
         don't provide these parameters, the simulator will ignore this move.
@@ -20,6 +20,9 @@ class Move(object):
 
     def __str__(self):
         return '<MOVE> Lin: %s, Ang: %s' % (self.linvel, self.angvel)
+
+    def __repr__(self):
+        return self.__str__()
 
     def is_quiet(self):
         return abs(self.linvel) < 10 and abs(self.angvel) < 5
