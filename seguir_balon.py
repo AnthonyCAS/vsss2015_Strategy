@@ -15,7 +15,7 @@ class SeguirBalonStrategy(TeamStrategyBase):
     THIS_SERVER = ('0.0.0.0', 9002)
     CONTROL_SERVER = ('0.0.0.0', 9003)
 
-    serializer_class = VsssSerializerSimulator
+    serializer_class = VsssSerializerReal
 
     def set_up(self):
         super(SeguirBalonStrategy, self).set_up()
@@ -26,7 +26,7 @@ class SeguirBalonStrategy(TeamStrategyBase):
         ball = data.ball
         move = self.controller.go_to_from(ball, team[0])
         print move
-        out_data = VsssOutData(moves=[move])
+        out_data = VsssOutData(moves=[move, Move(0, 0), Move(0, 0)])
         return out_data
 
 
@@ -45,5 +45,5 @@ if __name__ == '__main__':
         sys.exit()
 
     my_color = int(sys.argv[1])
-    strategy = SeguirBalonStrategy(my_color, 1)
+    strategy = SeguirBalonStrategy(my_color, 3)
     strategy.run()
