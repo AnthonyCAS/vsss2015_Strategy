@@ -16,7 +16,7 @@ UDP_PORT = 9003
 
 
 
-arduino = serial.Serial('/dev/ttyUSB0', baudrate=115200, timeout=1.0)
+arduino = serial.Serial('/dev/ttyUSB0', baudrate=2400, timeout=1.0)
 arduino.setDTR(False)
 time.sleep(1)
 arduino.flushInput()
