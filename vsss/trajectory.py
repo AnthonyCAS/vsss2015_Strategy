@@ -237,13 +237,8 @@ def scurve_test():
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
 
-<<<<<<< HEAD
     current = RobotPosition(100, 500, 180)
     goal = RobotPosition(110,430,180)
-=======
-    current = RobotPosition(500, 100, -90)
-    goal = RobotPosition(100, 500, 0)
->>>>>>> c4c7474426ef02a4c0f1f7af82786cdde8395011
 
     t = TrajectorySCurve()
     trajectory = t.get_trajectory(goal, current, 1)
