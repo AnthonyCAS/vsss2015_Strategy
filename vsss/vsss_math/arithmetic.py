@@ -18,7 +18,7 @@ def arcsin(x):
     return np.degrees(np.arcsin(x))
 
 def arccos(x):
-    return np.degrees(np.arccos(x))
+    return normalize(np.degrees(np.arccos(x)))
 
 def cos(A):
     return np.cos(np.radians(A))
@@ -33,7 +33,16 @@ def arctan2(co, ca):
     return normalize(np.degrees(ang))
 
 def arclen(A, B, r):
-    return (B-A)*(2*np.pi*r/360.0)
+    return normalize(B-A, 0, 360)*(2*np.pi*r/360.0)
+
+def arclen_ori(A, B, r, ori):
+    if ori > 0:
+        ret = normalize(B-A, 0, 360)*(2*np.pi*r/360.0)
+    elif ori < 0:
+        ret = normalize(B-A, -360, 0)*(2*np.pi*r/360.0)
+    else:
+        raise Exception("ori must be -1 or 1")
+    return abs(ret)
 
 def vector_to(a, b):
     return b-a
@@ -43,7 +52,7 @@ def translate(a, v):
 
 def angle_to(a, b):
     v = vector_to(a, b)
-    return arctan2(v[1], v[0])
+    return normalize(arctan2(v[1], v[0]))
 
 def norm(v):
     return np.linalg.norm(v)
@@ -65,4 +74,9 @@ def circle_right_direction(center, radius, sense, point, angle):
     A = angle_to(center, point)
     right = move_by_radius(center, radius, A+sense)
     wrong = move_by_radius(center, radius, A-sense)
+    print center, point, A
+    print right, angle_to(point, right), angle-angle_to(point, right)
+    print wrong, angle_to(point, wrong), angle-angle_to(point, wrong)
+    print angle, sense
+    print abs(angle-angle_to(point, right)) < abs(angle-angle_to(point, wrong))
     return abs(angle-angle_to(point, right)) < abs(angle-angle_to(point, wrong))

@@ -92,8 +92,8 @@ class TrajectorySCurve(TrajectoryBase):
 
     def get_trajectory(self, goal, current, points_distance=10):
         # A, B, C, D -> angles
-        A = current.theta
-        B = goal.theta
+        A = normalize(current.theta)
+        B = normalize(goal.theta)
 
         # a,b,c,d -> points
         a = current.tonp()
@@ -101,6 +101,7 @@ class TrajectorySCurve(TrajectoryBase):
         currentDistance = distance(a, b)
         # angular step for desired points_distance
         ang_step = points_distance*360.0/(2*np.pi*self.r)
+        ang_step = normalize(ang_step)
 
         # Vars to calculate best trajectory
         minlen = 99999
@@ -108,8 +109,8 @@ class TrajectorySCurve(TrajectoryBase):
         if currentDistance >  4*self.r:
             # sentidos horario=-1 antihorario=+1
             # sa: sentido de a; sb: sentido de b
-            for sa in [-1, 1]:
-                for sb in [-1, 1]:
+            for sa in [1.0]:
+                for sb in [-1.0]:
                     # Get the circle in the current sa
                     a1 = move_by_radius(a, self.r, A+90*sa)
 
@@ -134,36 +135,37 @@ class TrajectorySCurve(TrajectoryBase):
                             tA = 90
                             tp1 = t2p1
                         # tangent point 2
-                        tp2 = move_by_radius(b1, self.r, C+tA)
+                        tp2 = move_by_radius(b1, self.r, normalize(C+tA))
                     else: # cross
                         dist = distance(a, b)
                         D = arccos(2.0*self.r/dist)
-                        t1p1 = move_by_radius(a1, self.r, C+D)
-                        t2p1 = move_by_radius(a1, self.r, C-D)
+                        t1p1 = move_by_radius(a1, self.r, normalize(C+D))
+                        t2p1 = move_by_radius(a1, self.r, normalize(C-D))
 
-                        if circle_right_direction(a1, self.r, sa, t1p1, C+D-90):
+                        print C, D
+                        if circle_right_direction(a1, self.r, sa, t1p1, normalize(C+D-90)):
                             tA = -D
                             tp1 = t1p1
                         else:
                             tA = D
                             tp1 = t2p1
-                        tp2 = move_by_radius(b1, self.r, C+tA)
+                        tp2 = move_by_radius(b1, self.r, normalize(C+tA))
 
 
                     # Points of arc1
-                    D = A-90*sa
+                    D = normalize(A-90*sa)
                     if sa == sb:
-                        E = C+tA
+                        E = normalize(C+tA)
                     else:
-                        E = C-tA
+                        E = normalize(C-tA)
 
                     # Points of arc2
-                    F = B-90*sb
-                    G = C+tA
+                    F = normalize(B-90*sb)
+                    G = normalize(C+tA)
 
                     # Length of arcs
-                    arc1 = arclen(D, E, self.r)
-                    arc2 = arclen(G, F, self.r)
+                    arc1 = arclen_ori(D, E, self.r, sa)
+                    arc2 = arclen_ori(G, F, self.r, sb)
 
                     # Length of tangent
                     tlen = distance(tp1, tp2)
@@ -173,6 +175,7 @@ class TrajectorySCurve(TrajectoryBase):
 
                     # Update path if it's the shortest one
                     if pathlen < minlen:
+                        minmin = [sa, sb, D, E, arc1, G, F, arc2]
                         minlen = pathlen
                         ret = []
                         for i in angle_range(D, E, sa*ang_step):
@@ -182,6 +185,7 @@ class TrajectorySCurve(TrajectoryBase):
                         for i in angle_range(G, F, sb*ang_step):
                             ret.append(move_by_radius(b1, self.r, i))
                         ret.append(b)
+            print "ARC2", minmin
         else:
             # where a is the first point and b third point of the curve
     
@@ -261,13 +265,11 @@ def scurve_test():
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
 
-    current = RobotPosition(500, 500, 45)
-    goal = RobotPosition(520,520,-45)
+    current = RobotPosition(500, 500, 241)
+    goal = RobotPosition(320,320,-120)
 
-    t = TrajectorySCurve()
-    trajectory = t.get_trajectory(goal, current, 1)
-    for i, p in enumerate(trajectory):
-        trajectory[i] = arr(p[0], 600-p[1])
+    current = RobotPosition(500, 500, -219)
+    goal = RobotPosition(320,320,-120)
 
     done = False
     while not done:
@@ -277,6 +279,21 @@ def scurve_test():
             elif e.type == pygame.KEYDOWN:
                 if e.key == pygame.K_ESCAPE:
                     done = True
+                elif e.key == pygame.K_DOWN:
+                    current.theta -= 5
+                elif e.key == pygame.K_UP:
+                    current.theta += 5
+                elif e.key == pygame.K_LEFT:
+                    goal.theta -= 5
+                elif e.key == pygame.K_RIGHT:
+                    goal.theta += 5
+                print "CURRENT", current
+                print "GOAL", goal
+
+        t = TrajectorySCurve(r=60)
+        trajectory = t.get_trajectory(goal, current, 1)
+        for i, p in enumerate(trajectory):
+            trajectory[i] = arr(p[0], 600-p[1])
 
         screen.fill(WHITE)
         GREEN = (0, 255, 0)

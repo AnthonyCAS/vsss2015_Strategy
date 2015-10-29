@@ -124,7 +124,7 @@ class VeryFirstStrategy(TeamStrategyBase):
     use_control = True
     do_visualize = True
     use_vision = True
-    latency = 50
+    latency = 150
     print_iteration_time = False
 
     CONTROL_SERVER = ('127.0.0.1', 9003)
@@ -150,10 +150,7 @@ class VeryFirstStrategy(TeamStrategyBase):
         my_team = data.teams[my_color]
         ball = data.ball
 
-        if self.team == RED_TEAM:
-            goal = Position(-75, 0)
-        else:
-            goal = Position(75, 0)
+        goal = Position(-75.0, 0)
 
         out_data = VsssOutData()
         out_data.moves.append(get_portero_move(
