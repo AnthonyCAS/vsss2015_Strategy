@@ -24,9 +24,9 @@ class SeguirBalonStrategy(TeamStrategyBase):
     def strategy(self, data):
         team = data.teams[self.team]
         ball = data.ball
-        move = self.controller.go_to_from(ball, team[0])
+        move = self.controller.go_to_from(ball, team[1])
         print move
-        out_data = VsssOutData(moves=[move, Move(0, 0), Move(0, 0)])
+        out_data = VsssOutData(moves=[Move(0, 0), Move(0, 0),move])
         return out_data
 
 

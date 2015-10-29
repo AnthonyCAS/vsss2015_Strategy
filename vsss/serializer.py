@@ -116,5 +116,5 @@ class VsssSerializerReal(VsssSerializerBase):
             "WARNING: Team size in VsssOutData != Team size in VsssSerializer")
         for move in data.moves:
             ret.append(move.linvel)
-            ret.append(move.angvel)
+            ret.append(-move.angvel)
         return struct.pack('%sf' % len(ret), *ret)

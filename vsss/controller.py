@@ -9,7 +9,7 @@ class Controller:
     functions.
     """
     def __init__(self, lin_pid=PID(0.05, 0, 0.01),
-                 ang_pid=PID(0.01, 0, 0)):
+                 ang_pid=PID(0.01, 0, 0.01)):
         """
         :param lin_pid: Linear PID.
         :param ang_pid: Angular PID.

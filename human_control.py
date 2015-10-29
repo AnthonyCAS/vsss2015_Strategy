@@ -17,7 +17,7 @@ class HumanControlStrategy(TeamStrategyBase):
     THIS_SERVER = ('0.0.0.0', 9002)
     CONTROL_SERVER = ('0.0.0.0', 9003)
 
-    serializer_class = VsssSerializerReal
+    serializer_class = VsssSerializerSimulator
 
     def set_up(self):
         super(HumanControlStrategy, self).set_up()

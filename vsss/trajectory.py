@@ -7,7 +7,7 @@ class TrajectoryBase(object):
     def clean_trajectory(self, traj, points_distance):
         new_traj = [traj[0]]
         for i in xrange(len(traj)-1):
-            if distance(traj[i], traj[i+1]) >= points_distance:
+            if distance(traj[i+1], new_traj[-1]) >= points_distance:
                 new_traj.append(traj[i+1])
         if len(new_traj) < 2:
             new_traj = [traj[0], traj[-1]]
