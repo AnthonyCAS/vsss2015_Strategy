@@ -82,99 +82,122 @@ class TrajectorySCurve(TrajectoryBase):
         # a,b,c,d -> points
         a = current.tonp()
         b = goal.tonp()
-
+        currentDistance = distance(a, b)
         # angular step for desired points_distance
         ang_step = points_distance*360.0/(2*np.pi*self.r)
 
         # Vars to calculate best trajectory
         minlen = 99999
         ret = []
+        if currentDistance >  4*self.r:
+            # sentidos horario=-1 antihorario=+1
+            # sa: sentido de a; sb: sentido de b
+            for sa in [-1, 1]:
+                for sb in [-1, 1]:
+                    # Get the circle in the current sa
+                    a1 = move_by_radius(a, self.r, A+90*sa)
 
-        # sentidos horario=-1 antihorario=+1
-        # sa: sentido de a; sb: sentido de b
-        for sa in [-1, 1]:
+                    # Get the circle in the current sb
+                    b1 = move_by_radius(b, self.r, B+90*sb)
+
+                    C = angle_to(a1, b1)
+
+                    if sa == sb: # parallel
+                        # tangent 1, point 1
+                        t1p1 = move_by_radius(a1, self.r, C-90)
+                        # tangent 2, point 1
+                        t2p1 = move_by_radius(a1, self.r, C+90)
+
+                        # Decide which tangent is the correct one
+                        if circle_right_direction(a1, self.r, sa, t1p1, C):
+                            # tangent angle
+                            tA = -90
+                            # tangent point 1
+                            tp1 = t1p1
+                        else:
+                            tA = 90
+                            tp1 = t2p1
+                        # tangent point 2
+                        tp2 = move_by_radius(b1, self.r, C+tA)
+                    else: # cross
+                        dist = distance(a, b)
+                        D = arccos(2.0*self.r/dist)
+                        t1p1 = move_by_radius(a1, self.r, C+D)
+                        t2p1 = move_by_radius(a1, self.r, C-D)
+
+                        if circle_right_direction(a1, self.r, sa, t1p1, C+D-90):
+                            tA = -D
+                            tp1 = t1p1
+                        else:
+                            tA = D
+                            tp1 = t2p1
+                        tp2 = move_by_radius(b1, self.r, C+tA)
+
+
+                    # Points of arc1
+                    D = A-90*sa
+                    if sa == sb:
+                        E = C+tA
+                    else:
+                        E = C-tA
+
+                    # Points of arc2
+                    F = B-90*sb
+                    G = C+tA
+
+                    # Length of arcs
+                    arc1 = arclen(D, E, self.r)
+                    arc2 = arclen(G, F, self.r)
+
+                    # Length of tangent
+                    tlen = distance(tp1, tp2)
+
+                    # Length of path
+                    pathlen = arc1 + arc2 + tlen
+
+                    # Update path if it's the shortest one
+                    if pathlen < minlen:
+                        minlen = pathlen
+                        ret = []
+                        for i in angle_range(D, E, sa*ang_step):
+                            ret.append(move_by_radius(a1, self.r, i))
+                        ret.append(tp1)
+
+                        for i in angle_range(G, F, sb*ang_step):
+                            ret.append(move_by_radius(b1, self.r, i))
+                        ret.append(b)
+        else:
+            # where a is the first point and b third point of the curve
+    
             for sb in [-1, 1]:
-                # Get the circle in the current sa
-                a1 = move_by_radius(a, self.r, A+90*sa)
-
+                print 'Second way'
                 # Get the circle in the current sb
-                b1 = move_by_radius(b, self.r, B+90*sb)
+                orthB = move_by_radius(b, self.r, 90*sb+B)
+                hipho =  distance(a, orthB)
+                alpha =  arcsin (self.r/hipho)
+                R =  angle_to(orthB,a)
+                G = R - (90 - alpha)
+                secondPoint = move_by_radius(orthB, self.r, G )
 
-                C = angle_to(a1, b1)
+                it1 = distance (a, secondPoint)
+                  
+                F = angle_to(orthB, b)
+                arc1 = arclen(G, F, self.r)
+                length_path = it1 + arc1
 
-                if sa == sb: # parallel
-                    # tangent 1, point 1
-                    t1p1 = move_by_radius(a1, self.r, C-90)
-                    # tangent 2, point 1
-                    t2p1 = move_by_radius(a1, self.r, C+90)
-
-                    # Decide which tangent is the correct one
-                    if circle_right_direction(a1, self.r, sa, t1p1, C):
-                        # tangent angle
-                        tA = -90
-                        # tangent point 1
-                        tp1 = t1p1
-                    else:
-                        tA = 90
-                        tp1 = t2p1
-                    # tangent point 2
-                    tp2 = move_by_radius(b1, self.r, C+tA)
-                else: # cross
-                    dist = distance(a, b)
-                    D = arccos(2.0*self.r/dist)
-                    t1p1 = move_by_radius(a1, self.r, C+D)
-                    t2p1 = move_by_radius(a1, self.r, C-D)
-
-                    if circle_right_direction(a1, self.r, sa, t1p1, C+D-90):
-                        tA = -D
-                        tp1 = t1p1
-                    else:
-                        tA = D
-                        tp1 = t2p1
-                    tp2 = move_by_radius(b1, self.r, C+tA)
-
-
-                # Points of arc1
-                D = A-90*sa
-                if sa == sb:
-                    E = C+tA
-                else:
-                    E = C-tA
-
-                # Points of arc2
-                F = B-90*sb
-                G = C+tA
-
-                # Length of arcs
-                arc1 = arclen(D, E, self.r)
-                arc2 = arclen(G, F, self.r)
-
-                # Length of tangent
-                tlen = distance(tp1, tp2)
-
-                # Length of path
-                pathlen = arc1 + arc2 + tlen
-
-                # Update path if it's the shortest one
-                if pathlen < minlen:
-                    minlen = pathlen
+                if length_path < minlen:
+                    # Length of arcs
                     ret = []
-                    for i in angle_range(D, E, sa*ang_step):
-                        ret.append(move_by_radius(a1, self.r, i))
-                    ret.append(tp1)
+                    ret.append(a)
+                    ret.append(secondPoint)
 
+                    
+                    minlen = length_path
                     for i in angle_range(G, F, sb*ang_step):
-                        ret.append(move_by_radius(b1, self.r, i))
+                        ret.append(move_by_radius(orthB, self.r, i))
                     ret.append(b)
+
         return ret
-
-
-
-
-
-
-
-
 
 
 def hermit_test():
@@ -214,11 +237,16 @@ def scurve_test():
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
 
+<<<<<<< HEAD
+    current = RobotPosition(100, 500, 180)
+    goal = RobotPosition(110,430,180)
+=======
     current = RobotPosition(500, 100, -90)
     goal = RobotPosition(100, 500, 0)
+>>>>>>> c4c7474426ef02a4c0f1f7af82786cdde8395011
 
     t = TrajectorySCurve()
-    trajectory = t.get_trajectory(goal, current, 10)
+    trajectory = t.get_trajectory(goal, current, 1)
     for i, p in enumerate(trajectory):
         trajectory[i] = arr(p[0], 600-p[1])
 
@@ -232,7 +260,9 @@ def scurve_test():
                     done = True
 
         screen.fill(WHITE)
-
+        GREEN = (0, 255, 0)
+        pygame.draw.circle(screen, GREEN, (current.x, 600 - current.y),2)
+        pygame.draw.circle(screen, GREEN, (goal.x, 600 - goal.y),2)
         for i in xrange(len(trajectory)-1):
             pygame.draw.line(screen, BLACK, trajectory[i], trajectory[i+1], 3)
 
