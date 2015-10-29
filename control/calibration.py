@@ -176,6 +176,10 @@ def events_loop():
                 calibration_obj[calibrating_robot]["factores_compensacion"][int(power*10)] += 0.01
             elif e.key == pygame.K_n:
                 calibration_obj[calibrating_robot]["factores_compensacion"][int(power*10)] -= 0.01
+            elif e.key == pygame.K_o:
+                calibration_obj[calibrating_robot]["factores_compensacion"][int(power*10)] += 1.0
+            elif e.key == pygame.K_p:
+                calibration_obj[calibrating_robot]["factores_compensacion"][int(power*10)] -= 1.0
             elif e.key == pygame.K_g:
                 calibration_obj[calibrating_robot]["factores_compensacion"][int(power*10)] += 0.1
             elif e.key == pygame.K_h:
