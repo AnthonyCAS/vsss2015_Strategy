@@ -58,26 +58,15 @@ class PlayerState:
         return self.state(player, ball, goal, controller, *args, **kwargs)
 
 
-
-def Portero_Attack(ball, player, controller):
-    dest = Position(ball.x, ball.y)
-    return controller.go_to_from(dest, player)
-
-
-
 def get_portero_move(my_color, player, ball, goal, controller, *args, **kwargs):
-
     dest = Position(ball.x, ball.y)
     dest.theta = 90
 
     dest.y = min(16.5, max(-16.5, dest.y))
-
     if my_color == RED_TEAM:
         dest.x = 68
     else:
         dest.x = -68
-    if player.distance_to(ball) < 5:
-        dest = Position(ball.x, ball.y)
     return controller.go_to_from(dest, player)
 
 

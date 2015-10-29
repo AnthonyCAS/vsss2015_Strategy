@@ -4,6 +4,15 @@ from vsss_math.arithmetic import *
 from colors import *
 
 class TrajectoryBase(object):
+    def clean_trajectory(self, traj, points_distance):
+        new_traj = [traj[0]]
+        for i in xrange(len(traj)-1):
+            if distance(traj[i], traj[i+1]) >= points_distance:
+                new_traj.append(traj[i+1])
+        if len(new_traj) < 2:
+            new_traj = [traj[0], traj[-1]]
+        return new_traj
+
     def get_trajectory(self, goal, current, points_distance=10):
         """
         Return a set of intermediate points
@@ -67,12 +76,19 @@ class TrajectoryHermit(TrajectoryBase):
             self.prev_point = None
             self.prev_vel = None
         ret.append(goal.tonp())
-        return ret
+        return self.clean_trajectory(ret, points_distance)
 
 
 class TrajectorySCurve(TrajectoryBase):
+    distance_to_border = 10
     def __init__(self, r=30):
         self.r = r
+
+    # def point_near_border(self, point):
+    #     return point[0] < -75 + self.
+    #
+    # def check_borders(self, traj):
+    #     pass
 
     def get_trajectory(self, goal, current, points_distance=10):
         # A, B, C, D -> angles
@@ -172,32 +188,40 @@ class TrajectorySCurve(TrajectoryBase):
             for sb in [-1, 1]:
                 print 'Second way'
                 # Get the circle in the current sb
-                orthB = move_by_radius(b, self.r, 90*sb+B)
-                hipho =  distance(a, orthB)
+                center = move_by_radius(b, self.r, B+90*sb)
+                hipho =  distance(a, center)
                 alpha =  arcsin (self.r/hipho)
-                R =  angle_to(orthB,a)
-                G = R - (90 - alpha)
-                secondPoint = move_by_radius(orthB, self.r, G )
+                beta = 90-alpha
+                R =  angle_to(center,a)
+                t1p2 = move_by_radius(center, self.r, R-beta)
+                t2p2 = move_by_radius(center, self.r, normalize(R+beta))
 
-                it1 = distance (a, secondPoint)
+                if circle_right_direction(center, self.r, sb, t1p2, angle_to(a, t1p2)):
+                    tp2 = t1p2
+                    G = R-beta
+                else:
+                    tp2 = t2p2
+                    G = R+beta
+
+                lin = distance (a, tp2)
                   
-                F = angle_to(orthB, b)
+                F = angle_to(center, b)
                 arc1 = arclen(G, F, self.r)
-                length_path = it1 + arc1
+                length_path = lin + arc1
 
                 if length_path < minlen:
                     # Length of arcs
                     ret = []
                     ret.append(a)
-                    ret.append(secondPoint)
+                    ret.append(tp2)
 
                     
                     minlen = length_path
                     for i in angle_range(G, F, sb*ang_step):
-                        ret.append(move_by_radius(orthB, self.r, i))
+                        ret.append(move_by_radius(center, self.r, i))
                     ret.append(b)
 
-        return ret
+        return self.clean_trajectory(ret, points_distance)
 
 
 def hermit_test():
@@ -237,8 +261,8 @@ def scurve_test():
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
 
-    current = RobotPosition(100, 500, 180)
-    goal = RobotPosition(110,430,180)
+    current = RobotPosition(500, 500, 45)
+    goal = RobotPosition(520,520,-45)
 
     t = TrajectorySCurve()
     trajectory = t.get_trajectory(goal, current, 1)

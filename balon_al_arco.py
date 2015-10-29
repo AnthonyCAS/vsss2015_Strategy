@@ -7,6 +7,7 @@ from vsss.controller import Controller
 from vsss.position import RobotPosition, Position
 from vsss.trajectory import TrajectorySCurve
 from vsss.visualizer import VsssVisualizer
+from vsss.move import Move
 from vsss.colors import *
 
 trajectory = None
@@ -25,7 +26,7 @@ class TrajectoryVisualizer(VsssVisualizer):
 
 class BalonAlArcoStrategy(TeamStrategyBase):
     THIS_SERVER = ('0.0.0.0', 9002)
-    CONTROL_SERVER = ('0.0.0.0', 9001)
+    CONTROL_SERVER = ('0.0.0.0', 9003)
     serializer_class = VsssSerializerSimulator
     do_visualize = True
     visualizer_class = TrajectoryVisualizer
@@ -42,13 +43,16 @@ class BalonAlArcoStrategy(TeamStrategyBase):
         goal = RobotPosition(ball.x, ball.y, ball.angle_to(Position(75, 0)))
         current = team[0]
 
-        trajectory = self.traj.get_trajectory(goal, current, 3)
+        trajectory = self.traj.get_trajectory(goal, current, 7)
         intermediate = Position.fromnp(trajectory[1])
         # print current, intermediate
         move = self.controller.go_to_from(intermediate, current)
 
-        out_data = VsssOutData()
-        out_data.moves.append(move)
+        out_data = VsssOutData(moves=[
+            move,
+            Move(0,0),
+            Move(0,0),
+        ])
         return out_data
 
 
@@ -67,5 +71,5 @@ if __name__ == '__main__':
         sys.exit()
 
     my_color = int(sys.argv[1])
-    strategy = BalonAlArcoStrategy(my_color, 1)
+    strategy = BalonAlArcoStrategy(my_color, 3)
     strategy.run()

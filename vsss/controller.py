@@ -54,3 +54,11 @@ class Controller:
         move_to_goal = self.go_to_from(goal, current)
         move_to_ball = self.go_to_from(ball, current)
         return Move.combine(move_to_goal, move_to_ball, 1, 1)
+
+    def do_rotation(self, goal, current):
+        linerr, angerr = current.rotation_error(goal)
+        linvel = max(-1, min(1, self.lin_pid.update(linerr)))
+        angvel = min(1, max(-1, self.ang_pid.update(angerr)))
+        return  Move(linvel, angvel)
+
+
