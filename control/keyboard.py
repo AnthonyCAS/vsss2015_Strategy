@@ -140,7 +140,7 @@ pygame.init()
 
 power = 1.0
 team_size = 3
-latency = 0.150
+latency = 0.200
 
 def events_loop():
     global power

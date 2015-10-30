@@ -1,8 +1,8 @@
 from PID import PID
 from move import Move
-from position import Position
+from position import Position, RobotPosition
 from trajectory import TrajectorySCurve
-
+from vsss_math.arithmetic import *
 
 class Controller:
     """
@@ -46,10 +46,21 @@ class Controller:
         :param current: RobotPosition where we are now
         :return: Move
         """
-        trajectory = self.trajectory_generator.get_trajectory(
+        path = self.trajectory_generator.get_trajectory(
             goal, current, points_distance)
-        intermediate = Position.fromnp(trajectory[1])
+        if path is None:
+            alternative_angles = range(-180,180, 45)
+            distances = [abs(normalize(goal.theta-angle)) for angle in alternative_angles]
+            for dist, angle in sorted(zip(distances, alternative_angles)):
+                path = self.trajectory_generator.get_trajectory(
+                            RobotPosition(goal.x, goal.y, angle), current, points_distance)
+                if path is not None:
+                    break
+        if path is None:
+            return self.go_to_from(goal, current)
+        intermediate = Position.fromnp(path[1])
         return self.go_to_from(intermediate, current)
+
 
     def go_to_from_with_ball(self, goal, current, ball):
         move_to_goal = self.go_to_from(goal, current)
