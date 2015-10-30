@@ -17,7 +17,10 @@ from vsss.vsss_math.angles import normalize
 from vsss.vsss_math.arithmetic import *
 
 
-def spin_to_repel(player, ball, goal, controller, *args, **kwargs):
+my_side = 0
+
+
+def spin_to_repel(player, ball, goal, controller, initial):
     A = player.angle_to(goal)
     B = player.angle_to(ball)
     counter_clock = arclen_ori(A, B, 1.0, 1)
@@ -27,16 +30,27 @@ def spin_to_repel(player, ball, goal, controller, *args, **kwargs):
     else:
         return Move(0, 1)
 
-def shoot(player, ball, goal, controller, *args, **kwargs):
+
+def portero_follow_ball_y_axis(player, ball, goal, controller, initial):
+    if my_side == 0:
+        x = -68.0
+    else:
+        x = 68.0
+    follow_ball = Position(x, min(18, max(-18, ball.y)))
+    return controller.go_to_from(follow_ball, player)
+
+
+def shoot(player, ball, goal, controller, initial):
     next = RobotPosition(ball.x, ball.y, ball.angle_to(goal))
-    move = controller.go_with_trajectory(next, player, 10.0)
+    move = controller.go_with_trajectory(next, player)
     return move
 
-def idle(player, ball, goal, controller, *args, **kwargs):
-    print('idle')
-    initial = kwargs["initial"]
-    follow_ball = Position(initial.x, ball.y)
-    return controller.go_with_trajectory(initial, player, 10.0)
+
+def idle(player, ball, goal, controller, initial):
+    return Move(0,0)
+
+def go_to_initial(player, ball, goal, controller, initial):
+    return controller.go_with_trajectory(initial, player)
 
 
 
@@ -44,40 +58,43 @@ class PlayerState:
     def __init__(self, state):
         self.state = state
 
-    def get_move(self, player, ball, goal, controller, *args, **kwargs):
-        return self.state(player, ball, goal, controller, *args, **kwargs)
+    def get_move(self, player, ball, goal, controller, initial):
+        return self.state(player, ball, goal, controller, initial)
 
 
-def get_portero_move(my_color, player, ball, goal, controller, *args, **kwargs):
-    dest = Position(ball.x, ball.y)
-
-    dest.y = min(16.5, max(-16.5, dest.y))
-    if my_color == RIGHT_TEAM:
-        dest.x = 68
+portero_state = PlayerState(idle)
+def get_portero_move(my_side, player, ball, goal, controller, initial):
+    dist = player.distance_to(ball)
+    if player.distance_to(goal) > 20:
+        portero_state.state = go_to_initial
+    elif dist > 50:
+        portero_state.state = idle
+    elif dist <= 8:
+        portero_state.state = spin_to_repel
     else:
-        dest.x = -68
-    return controller.go_to_from(dest, player)
+        portero_state.state = portero_follow_ball_y_axis
+    return portero_state.get_move(player, ball, goal, controller, initial)
 
 
 delantero_state = PlayerState(idle)
-def get_delantero_move(my_color, player, ball, goal, controller, *args, **kwargs):
+def get_delantero_move(my_side, player, ball, goal, controller, initial):
     if abs(goal.x - ball.x) < 80:
         delantero_state.state = shoot
     else:
         delantero_state.state = idle
 
-    move = delantero_state.get_move(player, ball, goal, controller, *args, **kwargs)
+    move = delantero_state.get_move(player, ball, goal, controller, initial)
     return move
 
 
 medio_state = PlayerState(idle)
-def get_medio_move(my_color, player, ball, goal, controller, *args, **kwargs):
+def get_medio_move(my_side, player, ball, goal, controller, initial):
     if abs(goal.x - ball.x) > 80:
         medio_state.state = shoot
     else:
         medio_state.state = idle
 
-    move = medio_state.get_move(player, ball, goal, controller, *args, **kwargs)
+    move = medio_state.get_move(player, ball, goal, controller, initial)
     return move
 
 
@@ -102,18 +119,18 @@ class VeryFirstStrategy(TeamStrategyBase):
         self.medio_controller = Controller()
         self.delantero_controller = Controller()
 
-        if my_color == RED_TEAM:
-            self.delantero_initial=RobotPosition(0, 0, 180)
-            self.medio_initial = RobotPosition(50, 10, 180)
-            self.portero_initial = RobotPosition(71, 0, 0)
-        else:
+        if my_side == LEFT_TEAM:
             self.delantero_initial=RobotPosition(0, 0, 0)
             self.medio_initial = RobotPosition(-50, -10, 0)
             self.portero_initial = RobotPosition(-71, 0, 0)
+        else:
+            self.delantero_initial=RobotPosition(0, 0, 180)
+            self.medio_initial = RobotPosition(50, 10, 180)
+            self.portero_initial = RobotPosition(71, 0, 0)
 
 
     def strategy(self, data):
-        my_team = data.teams[my_color]
+        my_team = data.teams[my_side]
         ball = data.ball
 
         if self.team == RED_TEAM:
@@ -123,33 +140,20 @@ class VeryFirstStrategy(TeamStrategyBase):
 
         out_data = VsssOutData()
         out_data.moves.append(get_portero_move(
-            my_color, my_team[0], ball, goal, self.portero_controller,
+            my_side, my_team[0], ball, goal, self.portero_controller,
             initial=self.portero_initial))
-        out_data.moves.append(get_medio_move(
-            my_color, my_team[1], ball, goal, self.medio_controller,
-            initial=self.medio_initial))
-        out_data.moves.append(get_delantero_move(
-            my_color, my_team[2], ball, goal, self.delantero_controller,
-            initial=self.delantero_initial))
-        # out_data.moves.append(Move())
+        out_data.moves.append(Move())
+        out_data.moves.append(Move())
+        # out_data.moves.append(get_medio_move(
+        #     my_side, my_team[1], ball, goal, self.medio_controller,
+        #     initial=self.medio_initial))
+        # out_data.moves.append(get_delantero_move(
+        #     my_side, my_team[2], ball, goal, self.delantero_controller,
+        #     initial=self.delantero_initial))
         return out_data
 
 
 if __name__ == '__main__':
-    def help():
-        return """Ejecute el script de cualquiera de las 2 formas, una para cada equipo:
-        ./script_name 0 9002
-        ./script_name 1 9004"""
-
-    # Help the user if he doesn't know how to use the command
-    if len(sys.argv) != 3:
-        print help()
-        sys.exit()
-    elif sys.argv[1] != '0' and sys.argv[1] != '1':
-        print help()
-        sys.exit()
-
-    my_color = int(sys.argv[1])
-    strategy = VeryFirstStrategy(my_color, 3, this_server=("0.0.0.0", int(sys.argv[2])))
+    strategy = VeryFirstStrategy(my_side, 3, this_server=("0.0.0.0", 9002))
 
     strategy.run()
