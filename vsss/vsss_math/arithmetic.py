@@ -74,9 +74,6 @@ def circle_right_direction(center, radius, sense, point, angle):
     A = angle_to(center, point)
     right = move_by_radius(center, radius, A+sense)
     wrong = move_by_radius(center, radius, A-sense)
-    print center, point, A
-    print right, angle_to(point, right), angle-angle_to(point, right)
-    print wrong, angle_to(point, wrong), angle-angle_to(point, wrong)
-    print angle, sense
-    print abs(angle-angle_to(point, right)) < abs(angle-angle_to(point, wrong))
-    return abs(angle-angle_to(point, right)) < abs(angle-angle_to(point, wrong))
+    right_dist = abs(normalize(angle-angle_to(point, right), 0, 360))
+    wrong_dist = abs(normalize(angle-angle_to(point, wrong), 0, 360))
+    return right_dist < wrong_dist
