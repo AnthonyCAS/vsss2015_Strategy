@@ -4,6 +4,18 @@ from vsss_math.arithmetic import *
 from colors import *
 
 class TrajectoryBase(object):
+    def __init__(self, validate=True):
+        self.validate = validate
+
+    def validate_trajectory(self, traj):
+        if not self.validate:
+            return True
+        for p in traj:
+            if abs(p[0]) >= 71 or abs(p[1]) >= 61:
+                return False
+        return True
+
+
     def clean_trajectory(self, traj, points_distance):
         new_traj = [traj[0]]
         for i in xrange(len(traj)-1):
@@ -24,7 +36,8 @@ class TrajectoryBase(object):
 
 
 class TrajectoryHermit(TrajectoryBase):
-    def __init__(self, speed_factor=5):
+    def __init__(self, speed_factor=5, validate=True):
+        super(TrajectoryHermit, self).__init__(validate)
         self.speed_factor = speed_factor
         self.prev_point = None
         self.prev_vel = None
@@ -80,7 +93,8 @@ class TrajectoryHermit(TrajectoryBase):
 
 class TrajectorySCurve(TrajectoryBase):
     distance_to_border = 10
-    def __init__(self, r=30):
+    def __init__(self, r=30, validate=True):
+        super(TrajectorySCurve, self).__init__(validate)
         self.r = r
 
     # def point_near_border(self, point):
@@ -104,7 +118,7 @@ class TrajectorySCurve(TrajectoryBase):
 
         # Vars to calculate best trajectory
         minlen = 99999
-        ret = []
+        ret = None
         if currentDistance >  4*self.r:
             # sentidos horario=-1 antihorario=+1
             # sa: sentido de a; sb: sentido de b
@@ -173,18 +187,24 @@ class TrajectorySCurve(TrajectoryBase):
                     # Length of path
                     pathlen = arc1 + arc2 + tlen
 
+                    # Path
+                    path = []
+                    for i in angle_range(D, E, sa*ang_step):
+                        path.append(move_by_radius(a1, self.r, i))
+                    path.append(tp1)
+                    path.append(tp2)
+
+                    for i in angle_range(G, F, sb*ang_step):
+                        path.append(move_by_radius(b1, self.r, i))
+                    path.append(b)
+
+                    if not self.validate_trajectory(path):
+                        continue
+
                     # Update path if it's the shortest one
                     if pathlen < minlen:
                         minlen = pathlen
-                        ret = []
-                        for i in angle_range(D, E, sa*ang_step):
-                            ret.append(move_by_radius(a1, self.r, i))
-                        ret.append(tp1)
-                        ret.append(tp2)
-
-                        for i in angle_range(G, F, sb*ang_step):
-                            ret.append(move_by_radius(b1, self.r, i))
-                        ret.append(b)
+                        ret = path
         else:
             # where a is the first point and b third point of the curve
     
@@ -208,21 +228,28 @@ class TrajectorySCurve(TrajectoryBase):
                 lin = distance (a, tp2)
 
                 F = angle_to(center, b)
+                # Length of path
                 arc1 = arclen_ori(G, F, self.r, sb)
                 length_path = lin + arc1
 
+                # Path
+                path = []
+                path.append(a)
+                path.append(tp2)
+
+                for i in angle_range(G, F, sb*ang_step):
+                    path.append(move_by_radius(center, self.r, i))
+                path.append(b)
+
+                if not self.validate_trajectory(path):
+                    continue
+
                 if length_path < minlen:
-                    # Length of arcs
-                    ret = []
-                    ret.append(a)
-                    ret.append(tp2)
-
-                    
                     minlen = length_path
-                    for i in angle_range(G, F, sb*ang_step):
-                        ret.append(move_by_radius(center, self.r, i))
-                    ret.append(b)
-
+                    ret = path
+        print "minlen", minlen
+        if ret is None:
+            return None
         return self.clean_trajectory(ret, points_distance)
 
 
@@ -264,7 +291,7 @@ def scurve_test():
     screen = pygame.display.set_mode((800, 600))
 
     current = RobotPosition(500, 500, 241)
-    goal = RobotPosition(320,320,-120)
+    goal = RobotPosition(400,400,-120)
 
     # current = RobotPosition(500, 500, -219)
     # goal = RobotPosition(320,320,-120)
@@ -273,11 +300,13 @@ def scurve_test():
     # goal = RobotPosition(320,320,-125)
 
     done = False
+    recalculate_trajectory = True
     while not done:
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
                 done = True
             elif e.type == pygame.KEYDOWN:
+                recalculate_trajectory = True
                 if e.key == pygame.K_ESCAPE:
                     done = True
                 elif e.key == pygame.K_DOWN:
@@ -288,11 +317,29 @@ def scurve_test():
                     goal.theta -= 5
                 elif e.key == pygame.K_RIGHT:
                     goal.theta += 5
+                elif e.key == pygame.K_w:
+                    current.y += 10
+                elif e.key == pygame.K_s:
+                    current.y -= 10
+                elif e.key == pygame.K_a:
+                    current.x -= 10
+                elif e.key == pygame.K_d:
+                    current.x += 10
+                elif e.key == pygame.K_i:
+                    goal.y += 10
+                elif e.key == pygame.K_k:
+                    goal.y -= 10
+                elif e.key == pygame.K_j:
+                    goal.x -= 10
+                elif e.key == pygame.K_l:
+                    goal.x += 10
 
-        t = TrajectorySCurve(r=60)
-        trajectory = t.get_trajectory(goal, current, 1)
-        for i, p in enumerate(trajectory):
-            trajectory[i] = arr(p[0], 600-p[1])
+        if recalculate_trajectory:
+            recalculate_trajectory = False
+            t = TrajectorySCurve(r=60, validate=False)
+            trajectory = t.get_trajectory(goal, current, 1)
+            for i, p in enumerate(trajectory):
+                trajectory[i] = arr(p[0], 600-p[1])
 
         screen.fill(WHITE)
         GREEN = (0, 255, 0)

@@ -9,7 +9,7 @@ from vsss.move import Move
 
 
 class SeguirBalonStrategy(TeamStrategyBase):
-    latency = 100
+    latency = 150
     do_visualize = True
 
     THIS_SERVER = ('0.0.0.0', 9002)

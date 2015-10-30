@@ -38,9 +38,9 @@ class VsssSerializerSimulator(VsssSerializerBase):
     This class serializes the communication from/to the simulator.
     """
 
-    def __init__(self, my_team, team_size=3):
+    def __init__(self, my_side, team_size=3):
         """
-        :param my_team: Which is your team? You can import the teams from
+        :param my_side: Which is your team? You can import the teams from
         settings.py.
         :param team_size: How many robots are in your team?
         :param move_type: The type of the VsssOutData to serialize. Can be
@@ -48,7 +48,7 @@ class VsssSerializerSimulator(VsssSerializerBase):
         :return: None.
         """
         self.team_size = team_size
-        self.my_team = my_team
+        self.my_side = my_side
 
     def load(self, data):
         data = struct.unpack('%sf' % (len(data) / 4), data)
@@ -62,11 +62,13 @@ class VsssSerializerSimulator(VsssSerializerBase):
 
         ball = Position(data[2 * 3 * self.team_size],
                         data[2 * 3 * self.team_size + 1])
+        if self.my_side == 1:
+            teams = [teams[1], teams[0]]
         return VsssInData(teams, ball)
 
     def dump(self, data):
         assert (type(data) == VsssOutData)
-        ret = [float(self.my_team)]
+        ret = [float(self.my_side)]
         if len(data.moves) != self.team_size:
             print(
             "WARNING: Team size in VsssOutData != Team size in VsssSerializer")
@@ -81,9 +83,9 @@ class VsssSerializerReal(VsssSerializerBase):
     This class serializes the communication from/to the simulator.
     """
 
-    def __init__(self, my_team, team_size=3):
+    def __init__(self, my_side, team_size=3):
         """
-        :param my_team: Which is your team? You can import the teams from
+        :param my_side: Which is your team? You can import the teams from
         settings.py.
         :param team_size: How many robots are in your team?
         :param move_type: The type of the VsssOutData to serialize. Can be
@@ -91,7 +93,7 @@ class VsssSerializerReal(VsssSerializerBase):
         :return: None.
         """
         self.team_size = team_size
-        self.my_team = my_team
+        self.my_side = my_side
 
     def load(self, data):
         data = struct.unpack('%sf' % (len(data) / 4), data)
