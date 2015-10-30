@@ -11,42 +11,32 @@ import time
 from vsss.serializer import VsssSerializerSimulator, VsssOutData
 from vsss.move import Move
 from vsss.position import Position, RobotPosition
-from vsss.settings import RED_TEAM, BLUE_TEAM
+from vsss.settings import RED_TEAM, BLUE_TEAM, LEFT_TEAM, RIGHT_TEAM
 from vsss.controller import Controller
 from vsss.vsss_math.angles import normalize
+from vsss.vsss_math.arithmetic import *
 
 
-def ball_to_center(player, ball, goal, controller, *args, **kwargs):
-    print('Ball to center')
-    if player.distance_to(ball) < 5:
-        if player.angle_to(goal) > 0:
-            return Move(0, 20)
-        else:
-            return Move(0, -20)
+def spin_to_repel(player, ball, goal, controller, *args, **kwargs):
+    A = player.angle_to(goal)
+    B = player.angle_to(ball)
+    counter_clock = arclen_ori(A, B, 1.0, 1)
+    clock = arclen_ori(A, B, 1.0, -1)
+    if clock < counter_clock:
+        return Move(0, -1)
     else:
-        return controller.go_to_from(ball, player)
-
-def go_to_shooting_pos(player, ball, goal, controller, *args, **kwargs):
-    print('go to shooting pos')
-    if not abs(player.angle_to(goal) - ball.angle_to(goal)) < 0.2:
-        vec_ball_to_del = goal.vector_to(ball) / goal.distance_to(ball)
-        dest = ball.translate(vec_ball_to_del * 5)
-        dest.theta = normalize(ball.angle_to(goal))
-    else:
-        dest = Position(player.x, player.y)
-        dest.theta = player.angle_to(goal)
-    return controller.go_to_from(dest, player)
+        return Move(0, 1)
 
 def shoot(player, ball, goal, controller, *args, **kwargs):
-    print('shoot')
-    move = controller.go_to_from(goal, player)
+    next = RobotPosition(ball.x, ball.y, ball.angle_to(goal))
+    move = controller.go_with_trajectory(next, player, 10.0)
     return move
 
 def idle(player, ball, goal, controller, *args, **kwargs):
     print('idle')
     initial = kwargs["initial"]
     follow_ball = Position(initial.x, ball.y)
-    return controller.go_to_from(initial, player)
+    return controller.go_with_trajectory(initial, player, 10.0)
 
 
 
@@ -60,26 +50,19 @@ class PlayerState:
 
 def get_portero_move(my_color, player, ball, goal, controller, *args, **kwargs):
     dest = Position(ball.x, ball.y)
-    dest.theta = 90
 
     dest.y = min(16.5, max(-16.5, dest.y))
-    if my_color == RED_TEAM:
+    if my_color == RIGHT_TEAM:
         dest.x = 68
     else:
         dest.x = -68
     return controller.go_to_from(dest, player)
 
 
-delantero_state = PlayerState(go_to_shooting_pos)
+delantero_state = PlayerState(idle)
 def get_delantero_move(my_color, player, ball, goal, controller, *args, **kwargs):
     if abs(goal.x - ball.x) < 80:
-        if abs(ball.y) > 60 or abs(ball.x) > 70:
-            delantero_state.state = ball_to_center
-        elif (abs(player.angle_to(goal) - ball.angle_to(goal)) < 1 and
-                      player.distance_to(goal) > ball.distance_to(goal)):
-            delantero_state.state = shoot
-        else:
-            delantero_state.state = go_to_shooting_pos
+        delantero_state.state = shoot
     else:
         delantero_state.state = idle
 
@@ -87,16 +70,10 @@ def get_delantero_move(my_color, player, ball, goal, controller, *args, **kwargs
     return move
 
 
-medio_state = PlayerState(go_to_shooting_pos)
+medio_state = PlayerState(idle)
 def get_medio_move(my_color, player, ball, goal, controller, *args, **kwargs):
     if abs(goal.x - ball.x) > 80:
-        if abs(ball.y) > 60 or abs(ball.x) > 70:
-            medio_state.state = ball_to_center
-        elif (abs(player.angle_to(goal) - ball.angle_to(goal)) < 1 and
-                      player.distance_to(goal) > ball.distance_to(goal)):
-            medio_state.state = shoot
-        else:
-            medio_state.state = go_to_shooting_pos
+        medio_state.state = shoot
     else:
         medio_state.state = idle
 

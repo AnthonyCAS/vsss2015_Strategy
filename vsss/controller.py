@@ -1,6 +1,7 @@
 from PID import PID
 from move import Move
 from position import Position
+from trajectory import TrajectorySCurve
 
 
 class Controller:
@@ -9,7 +10,8 @@ class Controller:
     functions.
     """
     def __init__(self, lin_pid=PID(0.05, 0, 0.01),
-                 ang_pid=PID(0.01, 0, 0.01)):
+                 ang_pid=PID(0.01, 0, 0.01),
+                 trajectory_generator=TrajectorySCurve(r=10)):
         """
         :param lin_pid: Linear PID.
         :param ang_pid: Angular PID.
@@ -19,6 +21,7 @@ class Controller:
         """
         self.lin_pid = lin_pid
         self.ang_pid = ang_pid
+        self.trajectory_generator = trajectory_generator
 
     def go_to_from(self, goal, current):
         """
@@ -36,18 +39,16 @@ class Controller:
 
         return Move(linvel, angvel)
 
-    def go_with_trajectory(self, goal, current):
+    def go_with_trajectory(self, goal, current, points_distance=10.0):
         """
         Create a trajectory to go to the desired goal
         :param goal: RobotPosition where we want to go
         :param current: RobotPosition where we are now
         :return: Move
         """
-        traj = Trajectory()
-        trajectory = traj.get_trajectory(goal, current,
-                                         current.distance_to(goal)/10.0)
+        trajectory = self.trajectory_generator.get_trajectory(
+            goal, current, points_distance)
         intermediate = Position.fromnp(trajectory[1])
-        print current, intermediate
         return self.go_to_from(intermediate, current)
 
     def go_to_from_with_ball(self, goal, current, ball):
