@@ -43,14 +43,8 @@ class BalonAlArcoStrategy(TeamStrategyBase):
         goal = RobotPosition(ball.x, ball.y, ball.angle_to(Position(75, 0)))
         current = team[0]
 
-        trajectory = self.traj.get_trajectory(goal, current, 5)
-        intermediate = Position.fromnp(trajectory[1])
-
-        # Drawing purposes
+        move = self.controller.go_with_trajectory(goal, current)
         trajectory = self.traj.get_trajectory(goal, current, 1)
-
-        # print current, intermediate
-        move = self.controller.go_to_from(intermediate, current)
 
         out_data = VsssOutData(moves=[
             move,

@@ -1,8 +1,8 @@
 import socket
 import time
 from visualizer import VsssVisualizer
-from vsss.move import Move
-from vsss.data import VsssOutData
+from move import Move
+from data import VsssOutData
 
 
 class TeamStrategyBase(object):

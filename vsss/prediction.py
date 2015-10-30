@@ -27,6 +27,44 @@ class PredictionBase(object):
         raise NotImplementedError()
 
 
+
+class PredictionMru(PredictionBase):
+    def predict(self, delta_time):
+        """
+        Predict delta_time seconds in the future from the last update time
+        """
+        if len(self.pos_buffer) < 2:
+            return self.pos_buffer[-1]
+        # average angle
+        angles = []
+        for i in xrange(len(self.pos_buffer)-1):
+            angles.append(angle_to(self.pos_buffer[i], self.pos_buffer[i+1]))
+        angle = sum(angles)/len(angles)
+
+        # average velocity
+        velocities = []
+        for i in xrange(len(self.pos_buffer)-1):
+            dt = self.time_buffer[i+1]-self.time_buffer[i]
+            velocities.append(distance(self.pos_buffer[i], self.pos_buffer[i+1])/dt)
+        velocidadprom = sum(velocities)/len(velocities)
+
+        # final velocity
+        dt = self.time_buffer[-1] - self.time_buffer[0]
+        d = velocidadprom * dt
+        p = move_by_radius(self.pos_buffer[-1], d, angle)
+
+        if p[0] > 75:
+            p[0] = p[0] - 2*(p[0]-75)
+        elif p[0] < -75:
+            p[0] = p[0] - 2*(p[0]+75)
+        elif p[1] > 65:
+            p[1] = p[1] - 2*(p[1]-65)
+        elif p[1] < -65:
+            p[1] = p[1] - 2*(p[1]+65)
+
+        return p
+
+
 class PredictionMruv(PredictionBase):
     def predict(self, delta_time):
         """
@@ -169,11 +207,13 @@ def prediction_test():
 
             out_data = VsssOutData()
             out_data.moves.append(Move())
+            out_data.moves.append(Move())
+            out_data.moves.append(Move())
             return out_data
 
 
     my_color = 0
-    strategy = BalonAlArcoStrategy(my_color, 1)
+    strategy = BalonAlArcoStrategy(my_color, 3)
     strategy.run()
 
 
