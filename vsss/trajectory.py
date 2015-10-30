@@ -266,8 +266,8 @@ def scurve_test():
     current = RobotPosition(500, 500, 241)
     goal = RobotPosition(320,320,-120)
 
-    current = RobotPosition(500, 500, -219)
-    goal = RobotPosition(320,320,-120)
+    # current = RobotPosition(500, 500, -219)
+    # goal = RobotPosition(320,320,-120)
 
     # current = RobotPosition(500, 500, 281)
     # goal = RobotPosition(320,320,-125)

@@ -74,6 +74,6 @@ def circle_right_direction(center, radius, sense, point, angle):
     A = angle_to(center, point)
     right = move_by_radius(center, radius, A+sense)
     wrong = move_by_radius(center, radius, A-sense)
-    right_dist = abs(normalize(angle-angle_to(point, right), 0, 360))
-    wrong_dist = abs(normalize(angle-angle_to(point, wrong), 0, 360))
+    right_dist = abs(normalize(angle-angle_to(point, right)))
+    wrong_dist = abs(normalize(angle-angle_to(point, wrong)))
     return right_dist < wrong_dist
