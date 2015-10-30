@@ -62,8 +62,6 @@ class VsssSerializerSimulator(VsssSerializerBase):
 
         ball = Position(data[2 * 3 * self.team_size],
                         data[2 * 3 * self.team_size + 1])
-        if self.my_side == 1:
-            teams = [teams[1], teams[0]]
         return VsssInData(teams, ball)
 
     def dump(self, data):
@@ -105,7 +103,8 @@ class VsssSerializerReal(VsssSerializerBase):
                     RobotPosition(data[3 * self.team_size * color + i * 3] - 75,
                                   -(data[3 * self.team_size * color + i * 3 + 1] - 65),
                                   data[3 * self.team_size * color + i * 3 + 2]))
-
+        if self.my_side == 1:
+            teams = [teams[1], teams[0]]
         ball = Position(data[2 * 3 * self.team_size]-75,
                         -(data[2 * 3 * self.team_size + 1]-65))
         return VsssInData(teams, ball)

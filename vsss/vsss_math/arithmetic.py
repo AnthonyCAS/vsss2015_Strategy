@@ -54,6 +54,9 @@ def angle_to(a, b):
     v = vector_to(a, b)
     return normalize(arctan2(v[1], v[0]))
 
+def min_angular_distance(A, B):
+    return abs(normalize(A-B))
+
 def norm(v):
     return np.linalg.norm(v)
 

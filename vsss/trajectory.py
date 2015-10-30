@@ -104,6 +104,13 @@ class TrajectorySCurve(TrajectoryBase):
     #     pass
 
     def get_trajectory(self, goal, current, points_distance=10):
+        """
+        :param goal:
+        :param current:
+        :param points_distance:
+        :param case2_angle_tolarance: In case point to curve, how much can vary the orientation.
+        :return:
+        """
         # A, B, C, D -> angles
         A = normalize(current.theta)
         B = normalize(goal.theta)
@@ -244,7 +251,7 @@ class TrajectorySCurve(TrajectoryBase):
                 if not self.validate_trajectory(path):
                     continue
 
-                if length_path < minlen:
+                if min_angular_distance(current.theta, angle_to(path[0], path[1])) < minlen:
                     minlen = length_path
                     ret = path
         print "minlen", minlen
@@ -290,7 +297,7 @@ def scurve_test():
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
 
-    current = RobotPosition(500, 500, 241)
+    current = RobotPosition(500, 500, 45)
     goal = RobotPosition(400,400,-120)
 
     # current = RobotPosition(500, 500, -219)
@@ -342,9 +349,10 @@ def scurve_test():
                 trajectory[i] = arr(p[0], 600-p[1])
 
         screen.fill(WHITE)
+        RED = (255, 0, 0)
         GREEN = (0, 255, 0)
-        pygame.draw.circle(screen, GREEN, (current.x, 600 - current.y),2)
-        pygame.draw.circle(screen, GREEN, (goal.x, 600 - goal.y),2)
+        pygame.draw.circle(screen, GREEN, (current.x, 600 - current.y),6)
+        pygame.draw.circle(screen, RED, (goal.x, 600 - goal.y), 6)
         for i in xrange(len(trajectory)-1):
             pygame.draw.line(screen, BLACK, trajectory[i], trajectory[i+1], 3)
 

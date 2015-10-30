@@ -146,10 +146,11 @@ class RobotPosition(Position):
         linerr = self.distance_to(goal)
         angerr1 = normalize(self.angle_to(goal) - self.theta)
         angerr2 = normalize(self.angle_to(goal) - (self.theta-180))
-        if abs(angerr1) < abs(angerr2):
-            return linerr, angerr1
-        else:
-            return -linerr, angerr2
+        return linerr, angerr1
+        # if abs(angerr1) < abs(angerr2):
+        #     return linerr, angerr1
+        # else:
+        #     return -linerr, angerr2
 
     def rotation_error(self, goal):
         """

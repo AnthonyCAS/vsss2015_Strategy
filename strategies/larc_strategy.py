@@ -78,10 +78,7 @@ def get_portero_move(my_side, player, ball, goal, controller, initial):
 
 delantero_state = PlayerState(idle)
 def get_delantero_move(my_side, player, ball, goal, controller, initial):
-    if abs(goal.x - ball.x) < 80:
-        delantero_state.state = shoot
-    else:
-        delantero_state.state = idle
+    delantero_state.state = shoot
 
     move = delantero_state.get_move(player, ball, goal, controller, initial)
     return move
@@ -89,10 +86,10 @@ def get_delantero_move(my_side, player, ball, goal, controller, initial):
 
 medio_state = PlayerState(idle)
 def get_medio_move(my_side, player, ball, goal, controller, initial):
-    if abs(goal.x - ball.x) > 80:
+    if player.distance_to(ball) < 40:
         medio_state.state = shoot
     else:
-        medio_state.state = idle
+        medio_state.state = go_to_initial
 
     move = medio_state.get_move(player, ball, goal, controller, initial)
     return move
@@ -142,14 +139,23 @@ class VeryFirstStrategy(TeamStrategyBase):
         out_data.moves.append(get_portero_move(
             my_side, my_team[0], ball, goal, self.portero_controller,
             initial=self.portero_initial))
-        out_data.moves.append(Move())
-        out_data.moves.append(Move())
-        # out_data.moves.append(get_medio_move(
-        #     my_side, my_team[1], ball, goal, self.medio_controller,
-        #     initial=self.medio_initial))
-        # out_data.moves.append(get_delantero_move(
-        #     my_side, my_team[2], ball, goal, self.delantero_controller,
-        #     initial=self.delantero_initial))
+
+
+        # out_data.moves.append(Move())
+        # out_data.moves.append(Move())
+        if ball.distance_to(my_team[1]) < ball.distance_to(my_team[2]):
+            atacante = my_team[1]
+            mediocampista = my_team[2]
+        else:
+            atacante = my_team[2]
+            mediocampista = my_team[1]
+
+        out_data.moves.append(get_medio_move(
+            my_side, mediocampista, ball, goal, self.medio_controller,
+            initial=self.medio_initial))
+        out_data.moves.append(get_delantero_move(
+            my_side, atacante, ball, goal, self.delantero_controller,
+            initial=self.delantero_initial))
         return out_data
 
 

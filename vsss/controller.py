@@ -10,7 +10,7 @@ class Controller:
     functions.
     """
     def __init__(self, lin_pid=PID(0.05, 0, 0.01),
-                 ang_pid=PID(0.01, 0, 0.01),
+                 ang_pid=PID(0.025, 0, 0.01),
                  trajectory_generator=TrajectorySCurve(r=10)):
         """
         :param lin_pid: Linear PID.
