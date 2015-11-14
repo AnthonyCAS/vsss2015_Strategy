@@ -5,6 +5,7 @@ from vsss.strategy import TeamStrategyBase
 from vsss.data import VsssOutData
 from vsss.controller import Controller
 from vsss.move import Move
+from vsss.position import Position
 
 
 
@@ -15,7 +16,7 @@ class SeguirBalonStrategy(TeamStrategyBase):
     THIS_SERVER = ('0.0.0.0', 9002)
     CONTROL_SERVER = ('0.0.0.0', 9003)
 
-    serializer_class = VsssSerializerSimulator
+    serializer_class = VsssSerializerReal
 
     def set_up(self):
         super(SeguirBalonStrategy, self).set_up()
@@ -24,9 +25,10 @@ class SeguirBalonStrategy(TeamStrategyBase):
     def strategy(self, data):
         team = data.teams[self.team]
         ball = data.ball
-        move = self.controller.go_to_from(ball, team[2])
+        goal = Position(50, 50)
+        move = self.controller.go_to_from(goal, team[0])
         print move
-        out_data = VsssOutData(moves=[Move(0, 0), Move(0, 0),move])
+        out_data = VsssOutData(moves=[move, Move(0, 0), Move(0, 0)])
         return out_data
 
 
