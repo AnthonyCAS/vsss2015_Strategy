@@ -3,6 +3,7 @@ All of the points and vectors used here are numpy arrays
 First letters of the alphabet "a,b,c,d" are points
 First block mayus letters "A, B, C, D" are angles
 Least letters "v, w, x, y, z" are vectors
+Least uppercase letters "V, W, X, Y, Z" are numbers
 """
 
 import numpy as np
@@ -64,7 +65,14 @@ def distance(a, b):
     return norm(vector_to(a, b))
 
 def move_by_radius(a, r, A):
+    """
+    a: point
+    r: radius
+    A: angle
+    """
     return a + arr(r*cos(A), r*sin(A))
+
+translate_polar = move_by_radius
 
 def circle_right_direction(center, radius, sense, point, angle):
     """

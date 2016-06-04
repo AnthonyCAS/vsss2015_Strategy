@@ -7,11 +7,10 @@ class VisionTestStrategy(TeamStrategyBase):
     do_visualize = True
     use_vision = True
 
-    THIS_SERVER = ('0.0.0.0', 9002)
-    VISION_SERVER = ('127.0.0.1', 9001)
-    CONTROL_SERVER = ('127.0.0.1', 9001)
+    THIS_SERVER = ('0.0.0.0', 9010)
+    VISION_SERVER = ('127.0.0.1', 9009)
    
-    serializer_class = VsssSerializerReal
+    serializer_class = VsssSerializerSimulator
     def set_up(self):
 		super(VisionTestStrategy, self).set_up()
 
@@ -21,6 +20,6 @@ class VisionTestStrategy(TeamStrategyBase):
 
 if __name__ == '__main__':
     my_color = 0
-    strategy = VisionTestStrategy(my_color, 3)
+    strategy = VisionTestStrategy(my_color, 2)
     
     strategy.run()

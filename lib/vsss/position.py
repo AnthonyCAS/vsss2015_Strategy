@@ -3,6 +3,7 @@ Everything will be handled in degrees
 """
 
 import numpy as np
+import json
 from vsss_math.angles import normalize
 from vsss_math.arithmetic import *
 
@@ -66,6 +67,9 @@ class Position(object):
         """
         return Position.fromnp(translate(self.tonp(), v))
 
+    def translate_polar(self, radius, angle):
+        return Position.fromnp(translate_polar(self.tonp(), radius, angle))
+
     def distance_to(self, target_pos):
         """
         Calculate the euclidean distance from the current position to the target
@@ -114,7 +118,7 @@ class RobotPosition(Position):
         self.theta = normalize(theta)
 
     def __str__(self):
-        return 'x: %s, y: %s, theta: %s' % (self.x, self.y, self.theta)
+        return json.dumps({"x":self.x, "y":self.y, "theta":self.theta})
 
     def __repr__(self):
         return self.__str__()
@@ -122,6 +126,9 @@ class RobotPosition(Position):
     def theta_to_speed(self, speed=100):
         return np.array([speed*np.cos(np.radians(self.theta)),
                          speed*np.sin(np.radians(self.theta))])
+
+    def has_in_front(self, obj):
+        return self.distance_to(obj) < 7 and abs(self.theta-self.angle_to(obj)) < 30
 
     def looking_to(self, dist=3):
         """
@@ -145,7 +152,7 @@ class RobotPosition(Position):
         """
         linerr = self.distance_to(goal)
         angerr1 = normalize(self.angle_to(goal) - self.theta)
-        angerr2 = normalize(self.angle_to(goal) - (self.theta-180))
+        # angerr2 = normalize(self.angle_to(goal) - (self.theta-180))
         return linerr, angerr1
         # if abs(angerr1) < abs(angerr2):
         #     return linerr, angerr1
@@ -173,3 +180,7 @@ class RobotPosition(Position):
 
     def clone(self):
         return RobotPosition(self.x, self.y, self.theta)
+
+# Backwards compatibility
+# TODO: Remove class Position
+Position = RobotPosition

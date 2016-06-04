@@ -28,7 +28,7 @@ class Move(object):
         return abs(self.linvel) < 10 and abs(self.angvel) < 5
 
     @classmethod
-    def combine(cls, a, b, v, w):
+    def combine(cls, a, b, v=1, w=1):
         """
         Combine two movements into one
         :param a: First movement

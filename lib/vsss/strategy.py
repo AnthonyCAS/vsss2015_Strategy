@@ -42,6 +42,9 @@ class TeamStrategyBase(object):
         """
 
         # Make sure you defined this class attributes in your child class
+        if self.VISION_SERVER is None:
+            raise AttributeError('VISION_SERVER is not defined as a class '
+                                 'attribute, see the docs for TeamStrategyBase')
         if self.use_control and self.CONTROL_SERVER is None:
             raise AttributeError('CONTROL_SERVER is not defined as a class '
                                  'attribute, see the docs for TeamStrategyBase')
@@ -58,10 +61,12 @@ class TeamStrategyBase(object):
         self.prev_time = time.time()         # milliseconds
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(self.THIS_SERVER)
+        self.sock.sendto("", self.VISION_SERVER)
         self.team = team
         self.team_size = team_size
         self.serializer = self.serializer_class(team, team_size)
         self.done = False
+        
 
     def call_strategy(self, in_data):
         return self.strategy(in_data)
@@ -113,7 +118,7 @@ class TeamStrategyBase(object):
                     vision_time = time.time() - vision_t0
 
                 cur_time = time.time()
-                if cur_time - self.prev_time > self.latency/1000.0:
+                if cur_time - self.prev_time >= self.latency/1000.0:
                     self.prev_time = cur_time
                     if self.use_vision:
                         in_data = self.serializer.load(in_data)
