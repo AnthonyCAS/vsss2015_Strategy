@@ -58,7 +58,7 @@ class PredictionBase(object):
             del self.pos_buffer[0:10]
             del self.pos_buffer[0:10]   
 
-    def predict(self, deta_time):
+    def predict(self):
         raise NotImplementedError()
 
     def check_prediction():
@@ -67,7 +67,7 @@ class PredictionBase(object):
 
 class MyPrediction(PredictionBase):
 
-    def predict(self, delta_time):        
+    def predict(self):        
         """
         Predict delta_time seconds in the future from the last update time
         """
@@ -80,45 +80,59 @@ class MyPrediction(PredictionBase):
         delta_time = self.get_delta_time()
         # print 'DELTA', delta_time
         # print self.get_current_time()
-        print 'last pos: ', self.pos_buffer[-1]            
-        print 'oldest pos: ', self.pos_buffer[-self.time_frame]            
+        # print 'POS[-1]: ', self.pos_buffer[-1]            
+        # print 'POS[time_frame]: ', self.pos_buffer[-self.time_frame]         
         print 'VELOCITY: ', self.get_velocity(delta_time)
-        position = self.pos_buffer[-1] + delta_time * self.get_velocity(
-            delta_time)
-        print "PREDICTION New Position: ", position
-        return position
+        current_velocity = self.get_velocity(delta_time)
+        position = self.pos_buffer[-1] + delta_time * current_velocity - (
+            delta_time*delta_time)*self.get_acceleration(
+                current_velocity, delta_time) / 2
+        print "PREDICTION: New Position: ", position
+        return self.check_prediction(position)
 
     def check_motion(self):
-
         if distance(self.pos_buffer[-1], self.pos_buffer[-15]) < 3:
             return False
         return True
 
-    def check_prediction(self, ballPosition):
-        'here put validations such as is_collision and check_boundaries'
+    # Method which check is there is collision 
+    # or ball collides with other object
+    def check_prediction(self, position):
+        if self.check_boundaries(position):
+            return self.compute_next_position(position)
+        return position
 
-    def is_collision(self, objectOne, objectTwo, radius):
-        distance = objectOne.distance_to(objectTwo)
+    # we need positions of other objects like robots
+    def is_collision(self, object_one, object_two, radius):
+        distance = distance(object_one, object_two)
         if distance <= 2 * radius:
             print (' Distance: ({},{}) to ({},{}) = {}'.format(
-                objectOne.x, objectOne.y,
-                objectTwo.x, objectTwo.y, 
+                object_one.x, object_one.y,
+                object_two.x, object_two.y, 
                 distance))
             return True
         return False
     
     def check_boundaries(self, position):
-        if position.x > 75 or position.x < -75:
+        if position[0] > 75 or position[0] < -75:
             return True
-        if position.y > 65 or position.y < -65:
+        if position[1] > 65 or position[1] < -65:
             return True
         return False
 
     """ 
     Method that compute the new future position when the ball hits and object              
     """
-    def compute_next_position(self, vef, vtime, left, current_ball):
-        pass        
+    def compute_next_position(self, position):
+        if position[0] > 75:
+            position[0] = position[0] - 2*(position[0]-75)
+        elif position[0] < -75:
+            position[0] = position[0] - 2*(position[0]+75)
+        elif position[1] > 65:
+            position[1] = position[1] - 2*(position[1]-65)
+        elif position[1] < -65:
+            position[1] = position[1] - 2*(position[1]+65)
+        return position     
 
 
 new_pos = None
@@ -157,10 +171,11 @@ def prediction_test():
             global new_pos, listPredPositions
             team = data.teams[self.team]
             ball = data.ball
-            print 'Actual: ', ball
+            print 'Actual Position: ({})'.format(
+                ball.tonp())
             new_pos = data.ball
             self.predictor.update(ball, 0.0)       
-            new_pos = self.predictor.predict(1)            
+            new_pos = self.predictor.predict()            
 
             out_data = VsssOutData()
             return out_data
