@@ -15,6 +15,9 @@ def angle_range(begin, end, step, lower=-180, upper=180):
         i = normalize(i+step, lower=-180, upper=180)
     return ret
 
+"""
+    Difference between two angles, this angles have to be minor than 180
+"""
 def min_angle_between(angle1, angle2):
     angle1 = normalize(angle1, 0, 360)
     angle2 = normalize(angle2, 0, 360)

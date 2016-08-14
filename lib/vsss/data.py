@@ -1,4 +1,8 @@
-# TODO: Need better documentation
+"""
+These classes help us to hold position data which would be computed 
+(VsssInData) and turn into VsssOutData positions.
+
+"""
 
 
 class VsssInData(object):

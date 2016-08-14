@@ -1,6 +1,7 @@
 import socket
 import time
 from visualizer import VsssVisualizer
+
 from move import Move
 from data import VsssOutData
 
@@ -62,7 +63,7 @@ class TeamStrategyBase(object):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(self.THIS_SERVER)
         self.sock.sendto("", self.VISION_SERVER)
-        self.team = team
+        self.team = team        
         self.team_size = team_size
         self.serializer = self.serializer_class(team, team_size)
         self.done = False
@@ -114,26 +115,28 @@ class TeamStrategyBase(object):
                 vision_time = 0.0
                 if self.use_vision:
                     vision_t0 = time.time()
-                    in_data, addr = self.sock.recvfrom(1024)
+                    in_data, addr = self.sock.recvfrom(1024)                   
                     vision_time = time.time() - vision_t0
 
                 cur_time = time.time()
                 if cur_time - self.prev_time >= self.latency/1000.0:
                     self.prev_time = cur_time
+
                     if self.use_vision:
                         in_data = self.serializer.load(in_data)
-                    if self.do_visualize:
-                        self.done = self.visualizer.visualize(in_data)
-                    out_data = self.call_strategy(in_data)
-            
-                    if self.use_control:
-                        self.sock.sendto(self.serializer.dump(out_data),
-                                         self.CONTROL_SERVER)
-                end_time = time.time()
-                if self.print_iteration_time:
-                    it_time = end_time - start_time
-                    it_time -= vision_time
-                    print "Vision: ", vision_time, "\t", "Iteration: ", it_time
+                    if in_data:                        
+                        if self.do_visualize:
+                            self.done = self.visualizer.visualize(in_data)
+                        out_data = self.call_strategy(in_data)
+                        
+                        if self.use_control:                    
+                            self.sock.sendto(self.serializer.dump(out_data),
+                                             self.CONTROL_SERVER)
+                    end_time = time.time()
+                    if self.print_iteration_time:
+                        it_time = end_time - start_time
+                        it_time -= vision_time
+                        print "Vision: ", vision_time, "\t", "Iteration: ", it_time
         finally:
             self.tear_down()
 

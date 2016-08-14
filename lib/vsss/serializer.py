@@ -51,7 +51,7 @@ class VsssSerializerSimulator(VsssSerializerBase):
         self.my_side = my_side
 
     def load(self, data):
-        data = struct.unpack('%sf' % (len(data) / 4), data)
+        data = struct.unpack('%sf' % (len(data) / 4), data)        
         teams = [[], []]
         for color, team in enumerate(teams):
             for i in range(self.team_size):
@@ -62,6 +62,12 @@ class VsssSerializerSimulator(VsssSerializerBase):
 
         ball = Position(data[2 * 3 * self.team_size],
                         data[2 * 3 * self.team_size + 1])
+
+        # Temporal solution, we need to change simulator in order to filter
+        #  data when it lose the objects
+        if ball.x == 0.0:
+            return False
+        
         return VsssInData(teams, ball)
 
     def dump(self, data):

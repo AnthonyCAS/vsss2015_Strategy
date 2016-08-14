@@ -54,7 +54,7 @@ class Position(object):
         Calculate a vector from this position to the target position.
         :param target_pos: The target position.
         :return: A 2 dimensional vector from this position to the
-        target position.
+        target position. A-B
         """
         return vector_to(self.tonp(), target_pos.tonp())
 
@@ -68,6 +68,13 @@ class Position(object):
         return Position.fromnp(translate(self.tonp(), v))
 
     def translate_polar(self, radius, angle):
+        """
+        Return a new Position object from this object translated using 
+        radius and an angle. It
+        doesn't modify the actual position.
+        :param v: Translation vector desired.
+        :return: New Position translated.
+        """        
         return Position.fromnp(translate_polar(self.tonp(), radius, angle))
 
     def distance_to(self, target_pos):

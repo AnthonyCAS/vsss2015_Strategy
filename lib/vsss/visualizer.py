@@ -45,6 +45,7 @@ class VsssVisualizer(object):
         self.listen_events()
         colors = [RED, BLUE]
         self.screen.fill(WHITE)
+        flag = True
         for i in range(2):
             team = data.teams[i]
 
@@ -55,9 +56,11 @@ class VsssVisualizer(object):
                 front = robot.looking_to(10)
                 pygame.draw.line(self.screen, colors[i], center, front, 3)
 
-            ball = self.to_screen(data.ball)
-            center = [ball.x, ball.y]
-            pygame.draw.circle(self.screen, BLACK, center, 3)
+        # print data.ball
+        ball = self.to_screen(data.ball)
+
+        center = [ball.x, ball.y]
+        pygame.draw.circle(self.screen, BLACK, center, 3)
         self.extra_visualize()
         pygame.display.flip()
         return self.done
