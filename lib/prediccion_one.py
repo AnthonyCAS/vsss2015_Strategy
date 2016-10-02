@@ -13,8 +13,7 @@ from vsss.position import RobotPosition, Position
 from vsss.move import Move
 from vsss.visualizer import VsssVisualizer
 
-listPredPositions = []
-tam_prediction = 3
+MY_PORT = 9001
 
 class PredictionBase(object):
     """
@@ -121,7 +120,8 @@ class MyPrediction(PredictionBase):
         return False
 
     """ 
-    Method that compute the new future position when the ball hits and object              
+    Method that compute the new future position when the ball hits an object
+    like wall
     """
     def compute_next_position(self, position):
         if position[0] > 75:
@@ -163,12 +163,15 @@ def prediction_test():
         print_iteration_time = False
 
         def set_up(self):
+            global MY_PORT
+            if MY_PORT:
+                THIS_SERVER = ('localhost', MY_PORT)
             super(Prediction, self).set_up()
             self.controller = Controller()
             self.predictor = MyPrediction(time_frame=15)
 
         def strategy(self, data):
-            global new_pos, listPredPositions
+            global new_pos
             team = data.teams[self.team]
             ball = data.ball
             print 'Actual Position: ({})'.format(
@@ -187,4 +190,20 @@ def prediction_test():
 
 
 if __name__ == "__main__":
+    def help():
+        return """
+            You have to execute this script with the following format:
+            ./prediction_one.py port-number
+        """
+
+    # Help the user if he doesn't know how to use the command
+    print len(sys.argv)
+    MY_PORT = 9001
+    if len(sys.argv) == 2:
+        MY_PORT = int(sys.argv[1])
+    else:
+        print help()
+        sys.exit()
+
+
     prediction_test()

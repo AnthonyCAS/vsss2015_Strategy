@@ -23,7 +23,6 @@ class TrajectoryVisualizer(VsssVisualizer):
             for p in trajectory:
                 pygame.draw.circle(self.screen, GREEN, p, 3, 3)
             pygame.draw.circle(self.screen, BLUE, trajectory[1], 3, 3)
-
             
 
 class BalonAlArcoStrategy(TeamStrategyBase):
