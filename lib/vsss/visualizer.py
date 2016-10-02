@@ -43,11 +43,12 @@ class VsssVisualizer(object):
 
     def visualize(self, data, extra_visualization=None):
         self.listen_events()
-        colors = [RED, BLUE]
+        colors = [BLUE, RED]
         self.screen.fill(WHITE)
         flag = True
+        teams = [data.my_team, data.opp_team]
         for i in range(2):
-            team = data.teams[i]
+            team = teams[i]
 
             for robot in team:
                 robot = self.to_screen(robot)

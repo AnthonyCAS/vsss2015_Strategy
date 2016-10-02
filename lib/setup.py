@@ -9,5 +9,5 @@ setup(
     author='Jose Enrique Carrillo Pino',
     author_email='quique0194@gmail.com',
     # url='https://www.python.org/sigs/distutils-sig/',
-    packages=['vsss'],
+    packages=['vsss', 'vsss.ia', 'vsss.vsss_math'],
 )

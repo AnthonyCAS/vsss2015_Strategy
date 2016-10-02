@@ -12,16 +12,14 @@ class VsssInData(object):
     * The position of the ball.
     """
 
-    def __init__(self, teams=None, ball=None):
+    def __init__(self, my_team, opp_team, ball=None):
         """
         :param teams: Array[2], where each item is an array of RobotPositions.
         :param ball: Position object.
         :return: None.
         """
-        if teams is None:
-            self.teams = []
-        else:
-            self.teams = teams
+        self.my_team = my_team
+        self.opp_team = opp_team
         self.ball = ball
 
 

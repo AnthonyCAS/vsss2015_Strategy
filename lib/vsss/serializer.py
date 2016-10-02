@@ -4,6 +4,7 @@ import numpy as np
 from data import VsssInData, VsssOutData
 from position import RobotPosition, Position
 
+
 class VsssSerializerBase(object):
     """
     This is a base class for the serializers that will standardize
@@ -33,95 +34,31 @@ class VsssSerializerBase(object):
         raise NotImplementedError()
 
 
-class VsssSerializerSimulator(VsssSerializerBase):
-    """
-    This class serializes the communication from/to the simulator.
-    """
-
-    def __init__(self, my_side, team_size=3):
-        """
-        :param my_side: Which is your team? You can import the teams from
-        settings.py.
-        :param team_size: How many robots are in your team?
-        :param move_type: The type of the VsssOutData to serialize. Can be
-        either MOVE_BY_VEL or MOVE_BY_POW.
-        :return: None.
-        """
-        self.team_size = team_size
-        self.my_side = my_side
-
-    def load(self, data):
-        data = struct.unpack('%sf' % (len(data) / 4), data)        
-        teams = [[], []]
-        for color, team in enumerate(teams):
-            for i in range(self.team_size):
-                team.append(
-                    RobotPosition(data[3 * self.team_size * color + i * 3],
-                                  data[3 * self.team_size * color + i * 3 + 1],
-                                  data[3 * self.team_size * color + i * 3 + 2]))
-
-        ball = Position(data[2 * 3 * self.team_size],
-                        data[2 * 3 * self.team_size + 1])
-
-        # Temporal solution, we need to change simulator in order to filter
-        #  data when it lose the objects
-        if ball.x == 0.0:
-            return False
-        
-        return VsssInData(teams, ball)
-
-    def dump(self, data):
-        assert (type(data) == VsssOutData)
-        ret = [float(self.my_side)]
-        if len(data.moves) != self.team_size:
-            print(
-            "WARNING: Team size in VsssOutData != Team size in VsssSerializer")
-        for move in data.moves:
-            ret.append(move.linvel)
-            ret.append(move.angvel)
-        return struct.pack('%sf' % len(ret), *ret)
-
-
 class VsssSerializerReal(VsssSerializerBase):
     """
     This class serializes the communication from/to the simulator.
     """
 
-    def __init__(self, my_side, team_size=3):
-        """
-        :param my_side: Which is your team? You can import the teams from
-        settings.py.
-        :param team_size: How many robots are in your team?
-        :param move_type: The type of the VsssOutData to serialize. Can be
-        either MOVE_BY_VEL or MOVE_BY_POW.
-        :return: None.
-        """
-        self.team_size = team_size
-        self.my_side = my_side
-
     def load(self, data):
         data = struct.unpack('%sf' % (len(data) / 4), data)
+        assert(len(data) == 20)
         # print data
         teams = [[], []]
-        for color, team in enumerate(teams):
-            for i in range(self.team_size):
+        for i, team in enumerate(teams):
+            for robot in range(3):
                 team.append(
-                    RobotPosition(data[3 * self.team_size * color + i * 3] - 75,
-                                  -(data[3 * self.team_size * color + i * 3 + 1] - 65),
-                                  data[3 * self.team_size * color + i * 3 + 2]))
-        if self.my_side == 1:
-            teams = [teams[1], teams[0]]
-        ball = Position(data[2 * 3 * self.team_size]-75,
-                        -(data[2 * 3 * self.team_size + 1]-65))
-        return VsssInData(teams, ball)
+                    RobotPosition(data[9 * i + robot * 3],
+                                  data[9 * i + robot * 3 + 1],
+                                  data[9 * i + robot * 3 + 2])
+                )
+        ball = Position(data[18], data[19])
+        return VsssInData(teams[0], teams[1], ball)
 
     def dump(self, data):
-        assert (type(data) == VsssOutData)
+        assert(type(data) == VsssOutData)
+        assert(len(data.moves) == 3)
         ret = []
-        if len(data.moves) != self.team_size:
-            print(
-            "WARNING: Team size in VsssOutData != Team size in VsssSerializer")
         for move in data.moves:
             ret.append(move.linvel)
-            ret.append(-move.angvel)
+            ret.append(move.angvel)
         return struct.pack('%sf' % len(ret), *ret)

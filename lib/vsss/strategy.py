@@ -1,5 +1,7 @@
 import socket
 import time
+from optparse import OptionParser
+
 from visualizer import VsssVisualizer
 
 from move import Move
@@ -21,20 +23,17 @@ class TeamStrategyBase(object):
     run.
     """
 
-    latency = 50                # milliseconds
+    latency = 0                 # latency to send data to control server. In milliseconds. Zero means ASAP
     serializer_class = None     # e.g. VsssSerializerSimulator
     use_vision = True           # use vision server, if False, strategy will receive data=None
     use_control = True          # use control server, if False, strategy won't send data to control server
     do_visualize = False        # show pygame window with robot positions
     visualizer_class = VsssVisualizer
     field_zoom = 3
-    print_iteration_time = True
-
-    CONTROL_SERVER = None       # (ip, port) e.g. ('127.0.0.1', 9009)
-    THIS_SERVER = None          # (ip, port) e.g. ('127.0.0.1', 9009)
+    print_iteration_time = False
 
 
-    def __init__(self, team, team_size=3, this_server=None):
+    def __init__(self):
         """
         :param team: The team you're applying the strategy. You can import
         import either RED_TEAM or BLUE_TEAM from the settings.
@@ -42,30 +41,26 @@ class TeamStrategyBase(object):
         :return: None.
         """
 
-        # Make sure you defined this class attributes in your child class
-        if self.VISION_SERVER is None:
-            raise AttributeError('VISION_SERVER is not defined as a class '
-                                 'attribute, see the docs for TeamStrategyBase')
-        if self.use_control and self.CONTROL_SERVER is None:
-            raise AttributeError('CONTROL_SERVER is not defined as a class '
-                                 'attribute, see the docs for TeamStrategyBase')
-        if self.THIS_SERVER is None:
-            if this_server is None:
-                raise AttributeError('THIS_SERVER is not defined as a class '
-                                     'attribute, see the docs for TeamStrategyBase')
-            else:
-                self.THIS_SERVER = this_server
-        if self.serializer_class is None:
-            raise AttributeError('serializer is not defined as a class '
-                                 'attribute, see the docs for TeamStrategyBase')
+        parser = OptionParser()
+        parser.add_option("-p", "--port", dest="port", default=9002,
+                          help="Port of strategy server", metavar="FILE")
+        parser.add_option("-c", "--control-port", dest="control_port", default=9003,
+                          help="Port of control server")
+        parser.add_option("-s", "--team-size", dest="team_size", default=3,
+                          help="Number of team players: 1, 2 or 3")
+        parser.add_option("-t", "--team", dest="team_color",
+                          help="Team color: 'blue' or 'yellow'")
+        (self.options, args) = parser.parse_args()
+
+        self.THIS_SERVER = ('127.0.0.1', self.options.port)
+        self.CONTROL_SERVER = ('127.0.0.1', self.options.control_port)
+        print "RUNNING ON", self.THIS_SERVER
+        print "SENDING CONTROL DATA TO", self.CONTROL_SERVER
 
         self.prev_time = time.time()         # milliseconds
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(self.THIS_SERVER)
-        self.sock.sendto("", self.VISION_SERVER)
-        self.team = team        
-        self.team_size = team_size
-        self.serializer = self.serializer_class(team, team_size)
+        self.serializer = self.serializer_class()
         self.done = False
         
 
@@ -97,7 +92,7 @@ class TeamStrategyBase(object):
         :return: None.
         """
         if self.use_control:
-            out_data = VsssOutData(moves=[Move(0,0)]*self.team_size)
+            out_data = VsssOutData(moves=[Move(0,0)]*3)
             self.sock.sendto(self.serializer.dump(out_data), self.CONTROL_SERVER)
 
 
@@ -110,35 +105,34 @@ class TeamStrategyBase(object):
         self.set_up()
         try:
             while not self.done:
-                start_time = time.time()
                 in_data = None
-                vision_time = 0.0
                 if self.use_vision:
-                    vision_t0 = time.time()
-                    in_data, addr = self.sock.recvfrom(1024)                   
-                    vision_time = time.time() - vision_t0
+                    in_data, addr = self.sock.recvfrom(1024)
 
-                cur_time = time.time()
-                if cur_time - self.prev_time >= self.latency/1000.0:
-                    self.prev_time = cur_time
-
+                start_time = time.time()
+                if start_time - self.prev_time >= self.latency/1000.0:
                     if self.use_vision:
                         in_data = self.serializer.load(in_data)
-                    if in_data:                        
-                        if self.do_visualize:
-                            self.done = self.visualizer.visualize(in_data)
+                    if in_data:
                         out_data = self.call_strategy(in_data)
                         
-                        if self.use_control:                    
+                        if self.use_control and out_data is not None:                    
                             self.sock.sendto(self.serializer.dump(out_data),
                                              self.CONTROL_SERVER)
+                        if self.do_visualize:
+                            self.done = self.visualizer.visualize(in_data)
+
                     end_time = time.time()
                     if self.print_iteration_time:
                         it_time = end_time - start_time
-                        it_time -= vision_time
-                        print "Vision: ", vision_time, "\t", "Iteration: ", it_time
+                        print "Time between: ", self.start_time - self.prev_time, "\t", "Iteration: ", it_time
+
+                    self.prev_time = start_time
+        except Exception as e:
+            print "EXCEPTION!", e
         finally:
             self.tear_down()
+            print 'tear down'
 
 
 class FirstTimeStrategy(TeamStrategyBase):
